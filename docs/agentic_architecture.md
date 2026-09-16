@@ -8,6 +8,8 @@ paste one code block at a time.
 
 ## 1. End-to-end agentic architecture
 
+![End-to-end agentic architecture](diagrams/agentic-1.png)
+
 ```mermaid
 flowchart TB
     subgraph USER["Users"]
@@ -19,7 +21,7 @@ flowchart TB
         AGENT["BigQuery Data Agent<br/>NL to SQL, grounded in Knowledge Catalog"]
     end
 
-    subgraph GOV["Governed Semantic Layer — BigQuery"]
+    subgraph GOV["Governed Semantic Layer - BigQuery"]
         CUR["Curated tables<br/>feat_ / fct_ / dim_"]
         BQML["BQML models<br/>ML.PREDICT"]
         AIGEN["AI.GENERATE routines<br/>scouting narratives"]
@@ -63,6 +65,8 @@ flowchart TB
 
 ## 2. Grounding chain (how every claim traces to data)
 
+![Grounding chain](diagrams/agentic-2.png)
+
 ```mermaid
 flowchart LR
     Q["User question"] --> A["BigQuery Data Agent"]
@@ -80,6 +84,8 @@ flowchart LR
 ---
 
 ## 3. Request sequence (runtime)
+
+![Request sequence](diagrams/agentic-3.png)
 
 ```mermaid
 sequenceDiagram
@@ -101,6 +107,8 @@ sequenceDiagram
 ---
 
 ## 4. Consulting reuse pattern (66degrees)
+
+![Consulting reuse pattern](diagrams/agentic-4.png)
 
 ```mermaid
 flowchart TB
