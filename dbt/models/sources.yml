@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: ncaa_basketball
+    description: Raw NCAA men's basketball tables. Read-only. Do not write here.
+    database: da-hackathon-2026
+    schema: ncaa_basketball
+    tables:
+      - name: mbb_teams
+      - name: mbb_historical_teams_seasons
+      - name: mbb_historical_teams_games
+      - name: mbb_historical_tournament_games
+      - name: mbb_games_sr
+      - name: mbb_teams_games_sr
+      - name: mbb_players_games_sr
+      - name: mbb_pbp_sr
+      - name: mascots
+      - name: team_colors
+
+  - name: ncaa_catalog
+    description: Knowledge Catalog data-profile scan export. Read-only. Quality source of truth.
+    database: da-hackathon-2026
+    schema: ncaa_basketball_scan_results
+    tables:
+      - name: ncaa_basketball_20_sample_scans

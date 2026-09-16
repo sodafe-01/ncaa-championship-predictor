@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: stg_teams
+    description: "DE1. 1:1 typed copy of mbb_teams. Canonical Sportradar team_id."
+  - name: stg_teams_games_sr
+    description: "DE1. Team-game box scores, season = var ncaa_season (2017)."
+  - name: stg_games_sr
+    description: "DE1. Game-grain Sportradar rows, deduped on game_id, season 2017."
+  - name: stg_tournament_games
+    description: "DE1. NCAA tournament games for season 2017. Exclude CIT/CBI/NIT."
+  - name: stg_players_games_sr
+    description: "DE1. Player-game box scores for season 2017. Needed for returning-production features."
+  - name: stg_glossary_terms
+    description: "DE1. NCAA Basketball Glossary terms from Knowledge Catalog (read into BigQuery for agents + persist_docs)."

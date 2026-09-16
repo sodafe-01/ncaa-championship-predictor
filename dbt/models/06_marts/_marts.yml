@@ -1,0 +1,5 @@
+version: 2
+
+models:
+  - name: mart_front_office
+    description: "DE2. Serving table for Looker Studio and the Agents Hub chat assistant."

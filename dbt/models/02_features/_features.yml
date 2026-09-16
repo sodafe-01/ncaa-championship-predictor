@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: f_team_season
+    description: >
+      DE2. One row per team for ncaa_season (2017). Regular-season form only.
+      Do not include seed. Column names are the contract for ML1.
+  - name: f_team_game
+    description: "DE2. Team-game features for season 2017, NCAA tournament games excluded."
+  - name: f_matchup
+    description: "DE2. Tournament matchup rows = two f_team_season sides. No seed columns."
