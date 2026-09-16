@@ -1,0 +1,11 @@
+# Node
+node_modules/
+deck/node_modules/
+package-lock.json
+deck/package-lock.json
+
+# Generated previews (regenerable)
+deck/previews/
+
+# OS
+.DS_Store

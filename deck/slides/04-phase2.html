@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background:#FFFFFF; }
+body { width:720pt; height:405pt; margin:0; padding:0; font-family:Arial, sans-serif; background:#F5F7FA; display:flex; }
+.page { width:720pt; display:flex; flex-direction:column; }
+.header { background:#0B2545; padding:20pt 40pt; }
+.header p { margin:0; }
+.eyebrow { color:#EE6C4D; font-size:12pt; letter-spacing:2pt; }
+.title { color:#FFFFFF; font-size:24pt; font-weight:bold; margin-top:4pt; }
+.cols { display:flex; padding:20pt 32pt; }
+.col { width:320pt; margin:0 8pt; padding:18pt; background:#FFFFFF; border-radius:8pt; border-top:5pt solid #EE6C4D; box-shadow:2px 2px 8px rgba(0,0,0,0.08); }
+.col h3 { color:#0B2545; font-size:15pt; margin:0 0 8pt 0; }
+.col ul { margin:0; padding-left:16pt; }
+.col li { color:#2D3748; font-size:11.5pt; margin-bottom:6pt; line-height:1.25; }
+.owner { color:#3D5A80; font-size:10.5pt; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="header">
+<p class="eyebrow">PHASE 2 &nbsp;&bull;&nbsp; ~30%</p>
+<p class="title">ML &amp; AI Implementation</p>
+</div>
+<div class="cols">
+<div class="col">
+<h3>BQML Championship Prediction</h3>
+<p class="owner">OWNER: DATA SCIENTISTS</p>
+<ul>
+<li><b>Matchup model</b> (primary): P(A beats B) &mdash; the reusable unit</li>
+<li>Feature selection via importance; prefer differential features (A&minus;B)</li>
+<li>Train LOGISTIC_REG + BOOSTED_TREE; compare with ML.EVALUATE</li>
+<li>Backtest on prior tournaments vs. seed-only baseline</li>
+<li>Monte-Carlo bracket sim &rarr; <b>P(champion) per team</b></li>
+</ul>
+</div>
+<div class="col">
+<h3>AI.GENERATE Routines</h3>
+<p class="owner">OWNER: ANALYTICS ENGINEERS</p>
+<ul>
+<li>Turn probabilities into plain-English "why they win/lose"</li>
+<li>AI.GENERATE_TABLE &rarr; scouting cards (strength, weakness, X-factor)</li>
+<li>Ground prompts in real feature values to prevent hallucination</li>
+<li>Version prompt templates in a <b>prompts</b> table for reuse &amp; audit</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

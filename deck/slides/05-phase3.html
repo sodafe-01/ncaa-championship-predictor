@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background:#FFFFFF; }
+body { width:720pt; height:405pt; margin:0; padding:0; font-family:Arial, sans-serif; background:#F5F7FA; display:flex; }
+.page { width:720pt; display:flex; flex-direction:column; }
+.header { background:#0B2545; padding:18pt 40pt; }
+.header p { margin:0; }
+.eyebrow { color:#EE6C4D; font-size:12pt; letter-spacing:2pt; }
+.title { color:#FFFFFF; font-size:23pt; font-weight:bold; margin-top:3pt; }
+.body { display:flex; padding:12pt 28pt; }
+.flow { width:290pt; display:flex; flex-direction:column; }
+.node { background:#FFFFFF; border-radius:8pt; padding:8pt 14pt; margin-bottom:6pt; box-shadow:1px 1px 6px rgba(0,0,0,0.10); }
+.node.dark { background:#0B2545; }
+.node.dark p { color:#FFFFFF; }
+.node.accent { background:#EE6C4D; }
+.node.accent p { color:#FFFFFF; }
+.node .t { font-size:13pt; font-weight:bold; color:#0B2545; margin:0; }
+.node .s { font-size:10pt; color:#3D5A80; margin:2pt 0 0 0; }
+.arrow { text-align:center; margin:0 0 6pt 0; }
+.arrow p { margin:0; color:#8DA9C4; font-size:12pt; }
+.data { background:#EDF2F7; border-radius:8pt; padding:10pt; }
+.data p { margin:0 0 4pt 0; font-size:11pt; color:#2D3748; }
+.right { width:360pt; margin-left:20pt; padding:16pt; background:#FFFFFF; border-radius:8pt; border-left:6pt solid #EE6C4D; box-shadow:2px 2px 8px rgba(0,0,0,0.08); }
+.right h3 { color:#0B2545; font-size:14pt; margin:0 0 8pt 0; }
+.right ul { margin:0; padding-left:16pt; }
+.right li { color:#2D3748; font-size:11.5pt; margin-bottom:8pt; line-height:1.3; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="header">
+<p class="eyebrow">PHASE 3 &nbsp;&bull;&nbsp; ~20%</p>
+<p class="title">Agentic Architecture Blueprint</p>
+</div>
+<div class="body">
+<div class="flow">
+<div class="node accent"><p class="t" style="color:#FFFFFF;">Executive</p><p class="s" style="color:#FFFFFF;">"Who wins &amp; why?"</p></div>
+<div class="arrow"><p>&darr;</p></div>
+<div class="node dark"><p class="t" style="color:#FFFFFF;">Gemini Enterprise</p><p class="s" style="color:#8DA9C4;">Orchestration, reasoning, synthesis</p></div>
+<div class="arrow"><p>&darr;</p></div>
+<div class="node"><p class="t">BigQuery Data Agent</p><p class="s">NL &rarr; SQL, grounded in Catalog</p></div>
+<div class="arrow"><p>&darr;</p></div>
+<div class="data">
+<p><b>feat_team_season / fct_*</b> tables</p>
+<p><b>BQML models</b> (ML.PREDICT)</p>
+<p><b>AI.GENERATE</b> narratives</p>
+</div>
+</div>
+<div class="right">
+<h3>Design Principles</h3>
+<ul>
+<li><b>Separation of concerns:</b> Data Agent does trusted SQL over the governed model; Gemini reasons and presents.</li>
+<li><b>Grounding chain:</b> Catalog &rarr; curated tables &rarr; BQML &rarr; AI.GENERATE. Every claim traces to a query result.</li>
+<li><b>Reusability:</b> the agent points at a semantic layer, not hardcoded queries &mdash; swap the dataset, keep the pattern.</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background:#FFFFFF; }
+body { width:720pt; height:405pt; margin:0; padding:0; font-family:Arial, sans-serif; background:#F5F7FA; display:flex; }
+.page { width:720pt; display:flex; flex-direction:column; }
+.header { background:#0B2545; padding:20pt 40pt; }
+.header p { margin:0; }
+.eyebrow { color:#EE6C4D; font-size:12pt; letter-spacing:2pt; }
+.title { color:#FFFFFF; font-size:24pt; font-weight:bold; margin-top:4pt; }
+.cols { display:flex; padding:20pt 32pt; }
+.col { width:320pt; margin:0 8pt; padding:18pt; background:#FFFFFF; border-radius:8pt; border-top:5pt solid #3D5A80; box-shadow:2px 2px 8px rgba(0,0,0,0.08); }
+.col h3 { color:#0B2545; font-size:15pt; margin:0 0 8pt 0; }
+.col ul { margin:0; padding-left:16pt; }
+.col li { color:#2D3748; font-size:11.5pt; margin-bottom:6pt; line-height:1.25; }
+.owner { color:#EE6C4D; font-size:10.5pt; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="header">
+<p class="eyebrow">PHASE 1 &nbsp;&bull;&nbsp; ~20%</p>
+<p class="title">Data Discovery &amp; Engineering</p>
+</div>
+<div class="cols">
+<div class="col">
+<h3>Metadata Scanning &mdash; Knowledge Catalog</h3>
+<p class="owner">OWNER: TEAM CAPTAIN</p>
+<ul>
+<li>Enumerate all mapped BigQuery assets; export dataset &rarr; table &rarr; column inventory</li>
+<li>Filter for NCAA entities: team stats, games, brackets, rosters, seeds, advanced metrics</li>
+<li>Score datasets on coverage, freshness &amp; grain; flag join keys and quality risks</li>
+<li>Deliver a one-page <b>Data Map</b> for the Data Scientists</li>
+</ul>
+</div>
+<div class="col">
+<h3>Dataset Structuring &mdash; BigQuery</h3>
+<p class="owner">OWNER: DATA ENGINEERS</p>
+<ul>
+<li>Build staging &rarr; curated &rarr; feature layers (<b>stg / dim / fct</b>)</li>
+<li><b>feat_team_season</b>: one row per team-season, the modeling spine</li>
+<li>Partition facts by season, cluster by team_id; enforce types</li>
+<li>Add SQL data-quality assertions so models trust the inputs</li>
+</ul>
+</div>
+</div>
+</div>
+</body>
+</html>
