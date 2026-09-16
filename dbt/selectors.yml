@@ -1,0 +1,10 @@
+selectors:
+  - name: routine
+    description: Default build. Skips Gemini AI models (tag:ai).
+    default: true
+    definition:
+      method: fqn
+      value: "*"
+      exclude:
+        - method: tag
+          value: ai
