@@ -12,7 +12,7 @@ Paths in the stories are relative to `dbt/`: `models/00_stg/` means `dbt/models/
 | 1 | [DE-01](DE-01-core-staging.md) | Core staging: `stg_teams`, `stg_games`, `stg_team_games` | DE1 | DE-00 | every story | done |
 | 2 | [DE-02](DE-02-report-card-contract.md) | Report-card contract: `f_team_season` columns + skeleton | DE2 | DE-01 | ML1, ML2, AE | done |
 | 3 | [DE-03](DE-03-history-staging.md) | More staging: player games, tournament history, season history | DE1 | DE-01 | DE-04, DE-06, DE-07, DE-08, DE-10 | done |
-| 4 | [DE-04](DE-04-dq-gate.md) | Data-quality gate from the Knowledge Catalog scans | DE1 | DE-01, DE-03 | DE-07 | todo |
+| 4 | [DE-04](DE-04-dq-gate.md) | Data-quality gate from the Knowledge Catalog scans | DE1 | DE-01, DE-03 | DE-07 | done |
 | 5 | [DE-05](DE-05-game-efficiency.md) | Per-game efficiency: `f_team_game_efficiency` | DE2 | DE-01 | DE-07 | in-progress |
 | 6 | [DE-06](DE-06-roster-continuity.md) | Roster continuity: `f_roster_continuity` | DE2 | DE-03 | DE-07 | in-progress |
 | 7 | [DE-07](DE-07-report-card.md) | Full report card: `f_team_season` | DE2 | DE-02, DE-03, DE-04, DE-05, DE-06 | DE-09, DE-10, ML1, ML2, AE | in-progress |

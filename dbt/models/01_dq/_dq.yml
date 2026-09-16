@@ -1,0 +1,103 @@
+version: 2
+
+models:
+  - name: dq_column_profile
+    description: >
+      One row per scanned source table and column (505), from the latest Knowledge Catalog (Dataplex)
+      data-profile scan the organizers exported. Adds the table's real row count so the sample fraction
+      is visible (mbb_pbp_sr was profiled on a 20% sample; every other table in full) and flags columns
+      that are more than half NULL. This is the metadata the season gate and the dashboard's
+      data-quality page start from.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [table_name, column_name]}}
+      - row_count_between: {arguments: {min_count: 400, max_count: 505}}
+    columns:
+      - name: table_name
+        description: Scanned source table in the ncaa_basketball dataset (scan data_source.table_id).
+        data_tests: [not_null]
+      - name: column_name
+        description: Scanned column name.
+        data_tests: [not_null]
+      - name: column_type
+        description: BigQuery data type of the column, as reported by the scan.
+      - name: column_mode
+        description: Column mode reported by the scan (NULLABLE, REQUIRED or REPEATED).
+      - name: percent_null
+        description: Percentage of scanned rows where the column is NULL, on a 0-100 scale.
+      - name: percent_unique
+        description: Percentage of distinct values among scanned rows, on a 0-100 scale.
+      - name: min_value
+        description: Minimum value for numeric columns; NULL for other types.
+      - name: max_value
+        description: Maximum value for numeric columns; NULL for other types.
+      - name: average_value
+        description: Mean value for numeric columns; NULL for other types.
+      - name: standard_deviation
+        description: Standard deviation for numeric columns; NULL for other types.
+      - name: quartile_lower
+        description: 25th percentile for numeric columns; NULL for other types.
+      - name: quartile_median
+        description: Median for numeric columns; NULL for other types.
+      - name: quartile_upper
+        description: 75th percentile for numeric columns; NULL for other types.
+      - name: top_values
+        description: Most frequent values with their count and percentage of scanned rows (scan top_n).
+      - name: rows_scanned
+        description: Rows the profile job read (scan job_rows_scanned).
+      - name: table_row_count
+        description: Current row count of the source table, from the dataset's __TABLES__ metadata.
+      - name: sample_fraction
+        description: rows_scanned / table_row_count; about 0.2 for mbb_pbp_sr and 1.0 for every other table.
+        data_tests:
+          - accepted_range: {arguments: {min_value: 0, max_value: 1.01}}
+      - name: scanned_at
+        description: When the profile job started (scan job_start_time).
+      - name: is_high_null
+        description: TRUE when more than half of the scanned rows are NULL (percent_null > 50).
+
+  - name: dq_season_gate
+    description: >
+      One row per Sportradar season (2013-14 to 2017-18) deciding which seasons the models may use.
+      A season is model-ready when D1 box scores are at least 95% complete, its NCAA tournament has all
+      67 games and all 351 D1 teams appear. Player class is usable only in 2017-18. 2013-14 fails the
+      gate because about two thirds of its D1 box scores are missing.
+    data_tests:
+      - row_count_between: {arguments: {min_count: 5, max_count: 5}}
+    columns:
+      - name: season
+        description: Season start year (2017 means the 2017-18 season).
+        data_tests: [unique, not_null]
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: games
+        description: Games in stg_games for the season, including the few not closed.
+      - name: closed_games
+        description: Games whose status is closed (final).
+      - name: d1_teams
+        description: Distinct Division I teams with at least one game row in stg_team_games.
+      - name: ncaa_games
+        description: NCAA tournament games (postseason_kind = NCAA), First Four included.
+      - name: ncaa_complete
+        description: TRUE when the season has all 67 NCAA tournament games.
+      - name: d1_team_games
+        description: Team-game rows from closed games between two Division I teams.
+      - name: box_stats_rate
+        description: Share of those D1-vs-D1 team-game rows with a usable box score (has_box_stats).
+      - name: stats_usable
+        description: TRUE when box_stats_rate is at least 0.95.
+      - name: played_player_rows
+        description: Player-game rows where the player appeared (played).
+      - name: class_rate
+        description: Share of played player-game rows with a known academic class.
+      - name: class_usable
+        description: TRUE when class_rate is at least 0.9 (only 2017-18).
+      - name: minutes_rate
+        description: Share of played player-game rows with minutes recorded.
+      - name: catalog_class_percent_null
+        description: >
+          Knowledge Catalog percent_null (0-100) for mbb_players_games_sr.class across all seasons; the
+          Catalog flagged the missing class values before the per-season check did.
+      - name: model_ready
+        description: TRUE when stats_usable, ncaa_complete and all 351 D1 teams are present.
+      - name: gate_note
+        description: Plain-English reason for the gate decision, e.g. why a season is excluded.
