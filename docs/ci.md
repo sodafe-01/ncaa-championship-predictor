@@ -16,24 +16,23 @@ project compiles. `e2e` adds real end-to-end proof once BigQuery CI is enabled.
 
 ## Enabling the BigQuery jobs
 
-1. Create a CI service account with write access to the dataset:
-   ```bash
-   gcloud iam service-accounts create ncaa-ci --project da-hackathon-2026
-   SA=ncaa-ci@da-hackathon-2026.iam.gserviceaccount.com
-   gcloud projects add-iam-policy-binding da-hackathon-2026 \
-     --member="serviceAccount:$SA" --role=roles/bigquery.jobUser
-   bq add-iam-policy-binding --member="serviceAccount:$SA" \
-     --role=roles/bigquery.dataViewer da-hackathon-2026:ncaa_basketball
-   bq add-iam-policy-binding --member="serviceAccount:$SA" \
-     --role=roles/bigquery.dataEditor da-hackathon-2026:texas_longhorns
-   gcloud iam service-accounts keys create key.json --iam-account="$SA"
-   gh secret set GCP_SA_KEY < key.json --repo sodafe-01/ncaa-championship-predictor
-   rm key.json
-   ```
-2. Turn the BigQuery jobs on:
-   ```bash
-   gh variable set CI_BQ_ENABLED --body true --repo sodafe-01/ncaa-championship-predictor
-   ```
+> **Requires a project Owner** of `da-hackathon-2026` who also owns the
+> `texas_longhorns` dataset (creating a service account + editing dataset ACLs
+> needs IAM-admin, which regular contributors do not have).
+
+Run the one-shot helper:
+
+```bash
+bash scripts/setup-ci-sa.sh
+```
+
+It creates the `ncaa-ci` service account, grants `bigquery.jobUser` +
+`bigquery.dataViewer` (project) and `WRITER` on `texas_longhorns`, mints a key,
+stores it as the `GCP_SA_KEY` GitHub secret, and sets `CI_BQ_ENABLED=true`.
+
+If your org disables service-account keys, use **Workload Identity Federation**
+instead (keyless) and switch the `auth` step in `ci.yml` to
+`workload_identity_provider`.
 
 ## Branch protection (gating)
 
