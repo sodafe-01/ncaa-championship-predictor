@@ -115,7 +115,8 @@ models:
       - expression_is_true: {arguments: {expression: "season = tournament_year - 1"}}
       - expression_is_true: {arguments: {expression: "win_team_id != lose_team_id"}}
       - row_count_between:
-          arguments: {min_count: 1, max_count: 1, group_by: [tournament_year], where: "ncaa_round = 'FINAL'"}
+          arguments: {min_count: 1, max_count: 1, group_by: [tournament_year]}
+          config: {where: "ncaa_round = 'FINAL'"}
     columns:
       - name: win_team_id
         data_tests:
@@ -133,7 +134,9 @@ models:
     data_tests:
       - unique_combination_of_columns: {arguments: {combination_of_columns: [season, team_id]}}
       - row_count_between: {arguments: {min_count: 64, max_count: 68, group_by: [season]}}
-      - row_count_between: {arguments: {min_count: 1, max_count: 1, group_by: [season], where: "is_champion"}}
+      - row_count_between:
+          arguments: {min_count: 1, max_count: 1, group_by: [season]}
+          config: {where: "is_champion"}
     columns:
       - name: tournament_wins
         data_tests:

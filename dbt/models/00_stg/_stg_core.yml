@@ -1,0 +1,303 @@
+version: 2
+
+models:
+  - name: stg_teams
+    description: >
+      One row per Division I team (351) from the Sportradar team master, with brand color and mascot.
+      Conference fields are the current (2017-18) master values, not historical membership; use
+      stg_team_games.conf_alias for a team's conference in a given season.
+    data_tests:
+      - row_count_between: {arguments: {min_count: 351, max_count: 351}}
+    columns:
+      - name: team_id
+        description: Sportradar team id (mbb_teams.id); the join key used by every other table.
+        data_tests: [unique, not_null]
+      - name: market
+        description: School name, e.g. Villanova.
+      - name: name
+        description: Team nickname, e.g. Wildcats.
+      - name: alias
+        description: Short team code, e.g. VILL.
+      - name: display_name
+        description: School and nickname together, e.g. Villanova Wildcats.
+      - name: school_ncaa
+        description: Official NCAA school name.
+      - name: conf_alias
+        description: Conference short code in the current (2017-18) team master. Not historical membership.
+      - name: conf_name
+        description: Conference full name in the current (2017-18) team master. Not historical membership.
+      - name: code_ncaa
+        description: Official NCAA team code.
+      - name: kaggle_team_id
+        description: Team id used by the Kaggle March Madness datasets.
+      - name: venue_id
+        description: Current home venue id; used by the neutral-site rule in stg_games.
+      - name: venue_name
+        description: Current home venue name.
+      - name: venue_city
+        description: Current home venue city.
+      - name: venue_state
+        description: Current home venue state.
+      - name: venue_capacity
+        description: Current home venue capacity.
+      - name: color_hex
+        description: Primary team color as a hex code (team_colors.color).
+      - name: mascot
+        description: Mascot name (mascots.mascot).
+      - name: logo_small
+        description: URL of the small team logo.
+      - name: logo_medium
+        description: URL of the medium team logo.
+      - name: logo_large
+        description: URL of the large team logo.
+
+  - name: stg_games
+    description: >
+      One row per game (29,805), 2013-14 to 2017-18, every source row kept (including four games whose
+      status is not closed). season is the start year (2017 = 2017-18). Adds postseason labels, NCAA
+      tournament rounds that handle the 2015-16 renaming, and a best-effort neutral-site flag.
+      Scores come from the final game score (h_points_game / a_points_game), which is never missing.
+    data_tests:
+      - row_count_between: {arguments: {min_count: 29805, max_count: 29805}}
+      - row_count_between:
+          arguments: {min_count: 4, max_count: 4}
+          config: {where: "NOT is_closed"}
+      - expression_is_true: {arguments: {expression: "is_closed = (status = 'closed')"}}
+      - expression_is_true:
+          arguments: {expression: "ncaa_round IS NOT NULL AND is_neutral", where: "postseason_kind = 'NCAA'"}
+    columns:
+      - name: game_id
+        description: Sportradar game id.
+        data_tests: [unique, not_null]
+      - name: season
+        description: Season start year (2017 means the 2017-18 season).
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: scheduled_date
+        description: Date the game was scheduled.
+      - name: gametime
+        description: Scheduled tip-off timestamp.
+      - name: status
+        description: Raw Sportradar game status (closed for all but four games, which are complete).
+      - name: is_closed
+        description: TRUE when status is closed. Game-derived features, models and evaluations use only closed games.
+      - name: has_pbp
+        description: TRUE when the game has full play-by-play coverage (coverage = full).
+      - name: tournament
+        description: Raw tournament field (NULL regular season, Conference, or NCAA, which also tags NIT/CBI/CIT).
+      - name: tournament_type
+        description: Raw tournament type, e.g. East Regional, NIT, CBI, Big 12.
+      - name: tournament_round
+        description: Raw tournament round name; NCAA round names changed in 2015-16.
+      - name: postseason_kind
+        description: Game type. REG regular season, CONF conference tournament, NCAA tournament proper, NIT, CBI, CIT, OTHER (e.g. Vegas 16).
+        data_tests:
+          - accepted_values: {arguments: {values: ['REG', 'CONF', 'NCAA', 'NIT', 'CBI', 'CIT', 'OTHER']}}
+      - name: ncaa_round
+        description: NCAA tournament round (FF First Four, R64, R32, S16, E8, F4, FINAL); NULL for other games.
+        data_tests:
+          - accepted_values: {arguments: {values: ['FF', 'R64', 'R32', 'S16', 'E8', 'F4', 'FINAL']}}
+      - name: ncaa_round_order
+        description: NCAA round as a number from 0 (First Four) to 6 (final), for sorting.
+      - name: ncaa_region
+        description: NCAA tournament region (EAST, WEST, SOUTH, MIDWEST); NULL for First Four, Final Four and final.
+      - name: conference_game
+        description: TRUE when the source marks the game as a conference game.
+      - name: neutral_site_raw
+        description: Raw source neutral_site flag. NULL for about 60% of games and unreliable; use is_neutral.
+      - name: is_neutral
+        description: >
+          Best-effort neutral-site flag. NCAA tournament games are neutral; otherwise the source flag when present;
+          otherwise not neutral if played at the home team's current venue; otherwise neutral for conference
+          tournaments and not neutral for everything else.
+      - name: venue_id
+        description: Venue id where the game was played.
+      - name: venue_name
+        description: Venue name where the game was played.
+      - name: venue_city
+        description: Venue city.
+      - name: venue_state
+        description: Venue state.
+      - name: home_team_id
+        description: Team id of the team listed as home.
+      - name: home_market
+        description: School name of the home team.
+      - name: home_alias
+        description: Short code of the home team.
+      - name: home_conf_alias
+        description: Home team's conference code on this game (source-provided, not audited historical membership).
+      - name: home_division_alias
+        description: Home team's division code on this game (D1 for Division I).
+      - name: away_team_id
+        description: Team id of the team listed as away.
+      - name: away_market
+        description: School name of the away team.
+      - name: away_alias
+        description: Short code of the away team.
+      - name: away_conf_alias
+        description: Away team's conference code on this game (source-provided, not audited historical membership).
+      - name: away_division_alias
+        description: Away team's division code on this game (D1 for Division I).
+      - name: home_points
+        description: Home team's final score (h_points_game).
+      - name: away_points
+        description: Away team's final score (a_points_game).
+      - name: home_ap_rank
+        description: Home team's AP poll rank at game time; NULL when unranked (source uses 0).
+        data_tests:
+          - accepted_range: {arguments: {min_value: 1, max_value: 25}}
+      - name: away_ap_rank
+        description: Away team's AP poll rank at game time; NULL when unranked (source uses 0).
+      - name: winner_team_id
+        description: Team id of the winner; NULL unless the game is closed with two different final scores.
+      - name: is_d1_matchup
+        description: TRUE when both teams are Division I on this game.
+      - name: attendance
+        description: Reported attendance.
+      - name: lead_changes
+        description: Number of lead changes.
+      - name: times_tied
+        description: Number of times the score was tied.
+      - name: periods
+        description: Periods played (2 regulation halves plus any overtimes).
+      - name: is_overtime
+        description: TRUE when the game went to overtime (periods > 2).
+
+  - name: stg_team_games
+    description: >
+      One row per team per game (59,610): the team's box score with its opponent's, plus labels taken from
+      stg_games. Scores are final game scores. Turnovers include team-charged turnovers, and possessions use
+      the shared possessions macro. has_box_stats is FALSE for most 2013-14 rows.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [game_id, team_id]}}
+      - row_count_between: {arguments: {min_count: 59610, max_count: 59610}}
+    columns:
+      - name: game_id
+        description: Sportradar game id.
+        data_tests:
+          - relationships: {arguments: {to: "ref('stg_games')", field: game_id}}
+      - name: season
+        description: Season start year (2017 means the 2017-18 season).
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: scheduled_date
+        description: Date the game was scheduled.
+      - name: team_id
+        description: Team id for this row.
+      - name: market
+        description: School name.
+      - name: name
+        description: Team nickname.
+      - name: alias
+        description: Short team code.
+      - name: conf_alias
+        description: >
+          Team's conference code on this game as provided by the source. Preferred for team-season grouping,
+          but not audited historical membership.
+      - name: division_alias
+        description: Team's division code on this game (D1 for Division I).
+      - name: opp_id
+        description: Opponent team id.
+      - name: opp_market
+        description: Opponent school name.
+      - name: opp_alias
+        description: Opponent short code.
+      - name: opp_conf_alias
+        description: Opponent's conference code on this game (source-provided, not audited historical membership).
+      - name: opp_division_alias
+        description: Opponent's division code on this game.
+      - name: is_home
+        description: TRUE when this team is listed as the home team (source home_team).
+      - name: is_neutral
+        description: Best-effort neutral-site flag from stg_games.
+      - name: venue_type
+        description: neutral when is_neutral, otherwise home or away for this team.
+        data_tests:
+          - accepted_values: {arguments: {values: ['home', 'away', 'neutral']}}
+      - name: postseason_kind
+        description: Game type from stg_games (REG, CONF, NCAA, NIT, CBI, CIT, OTHER).
+      - name: ncaa_round
+        description: NCAA tournament round from stg_games; NULL for other games.
+      - name: ncaa_round_order
+        description: NCAA round number from 0 (First Four) to 6 (final).
+      - name: conference_game
+        description: TRUE when the source marks the game as a conference game.
+      - name: is_closed
+        description: TRUE when the game status is closed.
+      - name: is_d1_matchup
+        description: TRUE when both teams are Division I on this game.
+      - name: win
+        description: TRUE when this team won (source flag; NULL only for one closed 0-0 game in 2015-16).
+      - name: points
+        description: This team's final score (points_game).
+      - name: opp_points
+        description: Opponent's final score (opp_points_game).
+      - name: margin
+        description: points minus opp_points.
+      - name: fgm
+        description: Field goals made.
+      - name: fga
+        description: Field goals attempted.
+      - name: tpm
+        description: Three-pointers made.
+      - name: tpa
+        description: Three-pointers attempted.
+      - name: ftm
+        description: Free throws made.
+      - name: fta
+        description: Free throws attempted.
+      - name: orb
+        description: Offensive rebounds (players).
+      - name: drb
+        description: Defensive rebounds (players).
+      - name: reb
+        description: Total rebounds by players (excludes team rebounds).
+      - name: team_reb
+        description: Rebounds credited to the team rather than a player.
+      - name: ast
+        description: Assists.
+      - name: stl
+        description: Steals.
+      - name: blk
+        description: Blocks.
+      - name: pf
+        description: Personal fouls.
+      - name: tov
+        description: Total turnovers, player turnovers plus team-charged turnovers.
+      - name: opp_fgm
+        description: Opponent field goals made.
+      - name: opp_fga
+        description: Opponent field goals attempted.
+      - name: opp_tpm
+        description: Opponent three-pointers made.
+      - name: opp_tpa
+        description: Opponent three-pointers attempted.
+      - name: opp_ftm
+        description: Opponent free throws made.
+      - name: opp_fta
+        description: Opponent free throws attempted.
+      - name: opp_orb
+        description: Opponent offensive rebounds (players).
+      - name: opp_drb
+        description: Opponent defensive rebounds (players).
+      - name: opp_ast
+        description: Opponent assists.
+      - name: opp_stl
+        description: Opponent steals.
+      - name: opp_blk
+        description: Opponent blocks.
+      - name: opp_pf
+        description: Opponent personal fouls.
+      - name: opp_tov
+        description: Opponent total turnovers, player plus team-charged.
+      - name: poss
+        description: Estimated possessions for this team from the shared possessions macro (FGA - ORB + TOV + coefficient x FTA).
+        data_tests:
+          - accepted_range: {arguments: {min_value: 15, max_value: 190, where: "has_box_stats"}}
+      - name: opp_poss
+        description: Estimated possessions for the opponent, same formula.
+      - name: has_box_stats
+        description: >
+          TRUE when FGA, ORB, turnovers and FTA are present for both teams and both teams attempted at least one
+          field goal. FALSE for most 2013-14 rows and for zero-filled box scores (mostly games against non-D1 opponents).
+          poss and the box-score columns are only meaningful when this is TRUE.

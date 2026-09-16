@@ -6,6 +6,16 @@
 
 Tidy, correctly labeled views over the raw Sportradar tables, so nobody downstream re-derives season labels, tournament rounds, neutral sites or possessions.
 
+## As built (2026-09-16)
+
+Built and verified: 22/22 tests pass, `scripts/verify.sh` exits 0, and every column is described in BigQuery. It differs from the original story in five places, all reflected below:
+
+1. **Scores come from `*_points_game`.** `h_points` / `points` are box-score sums: NULL for 4,009 games and different in 48 more. `points_game` is never NULL and matches `win` on every row.
+2. **`has_box_stats` also requires `fga > 0` for both teams.** The possessions range test found 822 team rows with zero-filled box scores but points scored, almost all against non-D1 opponents.
+3. **The non-closed-games count test filters with `config: {where: ...}`**, because this repo's `row_count_between` has no `where` argument.
+4. **Possessions use this repo's macro: 0.44 × FTA.** The planning docs said 0.475; see Open decisions in `README.md`.
+5. **One closed game has no result.** UTSA vs Central Arkansas (2015-16) has a full box score (84–98 in box-score points) but a recorded final score of 0–0 and NULL `win`. Staging keeps it with `winner_team_id` NULL; downstream stories use only games with a result.
+
 ## Files you own
 
 - `models/00_stg/stg_teams.sql`
@@ -64,7 +74,7 @@ Views (the folder default). Staging keeps every row; later layers filter.
 | venue_id, venue_name, venue_city, venue_state | STRING | |
 | home_team_id, home_market, home_alias, home_conf_alias, home_division_alias | STRING | from `h_*` |
 | away_team_id, away_market, away_alias, away_conf_alias, away_division_alias | STRING | from `a_*` |
-| home_points, away_points | INT64 | `h_points`, `a_points` |
+| home_points, away_points | INT64 | final score `h_points_game`, `a_points_game` (`h_points` is NULL for 4,009 games and differs in 48) |
 | home_ap_rank, away_ap_rank | INT64 | `NULLIF(h_rank, 0)`: 0 means unranked |
 | winner_team_id | STRING | NULL unless closed with both scores |
 | is_d1_matchup | BOOL | both division aliases = `D1` |
@@ -97,15 +107,15 @@ Build from `mbb_teams_games_sr` joined to `stg_games`. Take `season_label`, `pos
 | venue_type | STRING | `neutral` when `is_neutral`, else `home` or `away` |
 | postseason_kind, ncaa_round, ncaa_round_order, conference_game, is_closed, is_d1_matchup | | from `stg_games` |
 | win | BOOL | |
-| points, opp_points, margin | INT64 | margin = points − opp_points |
+| points, opp_points, margin | INT64 | final score `points_game`, `opp_points_game`; margin = points − opp_points |
 | fgm, fga, tpm, tpa, ftm, fta | INT64 | field goals, three-pointers, free throws |
 | orb, drb, reb, team_reb | INT64 | `offensive_rebounds`, `defensive_rebounds`, `rebounds` (players only), `team_rebounds` |
 | ast, stl, blk, pf | INT64 | |
 | tov | INT64 | `turnovers + COALESCE(team_turnovers, 0)`: source `turnovers` excludes team-charged turnovers |
 | opp_fgm, opp_fga, opp_tpm, opp_tpa, opp_ftm, opp_fta, opp_orb, opp_drb, opp_ast, opp_stl, opp_blk, opp_pf | INT64 | |
 | opp_tov | INT64 | `opp_turnovers + COALESCE(opp_team_turnovers, 0)` |
-| poss, opp_poss | FLOAT64 | `possessions('fga', 'orb', 'tov', 'fta')` and the opponent version |
-| has_box_stats | BOOL | fga, orb, tov, fta and all four opponent versions are non-NULL |
+| poss, opp_poss | FLOAT64 | `possessions('fga', 'orb', 'tov', 'fta')` and the opponent version | (this repo's macro uses 0.44 × FTA)
+| has_box_stats | BOOL | fga, orb, tov, fta and all four opponent versions are non-NULL, **and** both teams have `fga > 0` (822 zero-filled box scores exist) |
 
 ## Build notes (verified 2026-09-16)
 
@@ -115,6 +125,10 @@ Build from `mbb_teams_games_sr` joined to `stg_games`. Take `season_label`, `pos
 - `mbb_teams` holds the 2017-18 venue, and a few programs changed arenas, so `is_neutral` is a best-effort rule. Report its distribution.
 - `mbb_teams.conf_alias` is current-state. Downstream uses the most common per-game `conf_alias` for a team-season, but Sportradar remains best-available rather than authoritative conference history.
 - 2013-14 box scores are 66% missing; `has_box_stats` makes that visible without dropping rows.
+- **Scores (found while building):** use `*_points_game`. It is never NULL and matches the source `win` flag on every row; `*_points` are box-score sums that are NULL for 4,009 games.
+- **Zero-filled box scores (found while building):** 822 team rows, almost all against non-D1 opponents, have 0 field-goal attempts yet points scored. `has_box_stats` requires `fga > 0` so they count as missing.
+- One closed game is recorded 0–0 with NULL `win` (Central Arkansas vs UTSA, 2015-16); `winner_team_id` stays NULL.
+- Known limitation of the `is_neutral` rule: only 3 of 15 NIT semifinals/finals and 2.6% of regular-season games come out neutral, because games with a NULL source flag away from the home team's current venue default to not neutral.
 
 ## Tests first
 
@@ -132,7 +146,9 @@ models:
   - name: stg_games
     data_tests:
       - row_count_between: {arguments: {min_count: 29805, max_count: 29805}}
-      - row_count_between: {arguments: {min_count: 4, max_count: 4, where: "NOT is_closed"}}
+      - row_count_between:
+          arguments: {min_count: 4, max_count: 4}
+          config: {where: "NOT is_closed"}   # this repo's row_count_between has no where argument
       - expression_is_true: {arguments: {expression: "is_closed = (status = 'closed')"}}
       - expression_is_true:
           arguments: {expression: "ncaa_round IS NOT NULL AND is_neutral", where: "postseason_kind = 'NCAA'"}
@@ -222,7 +238,7 @@ Selecting the three models also runs their YAML tests and both singular tests.
 - Row counts for the three views.
 - The four retained non-closed games and their raw statuses.
 - `is_neutral` share by `postseason_kind`.
-- Share of team-games with `has_box_stats` by season (expect about 0.34 for 2013 and about 1.0 for 2014–2017).
+- Share of closed D1-vs-D1 team-games with `has_box_stats` by season (verified: 0.348 for 2013-14 and 1.0 for 2014-15 to 2017-18; the all-rows share is 0.93–1.0 from 2014-15 on because of zero-filled box scores against non-D1 opponents).
 
 ## Out of scope
 
