@@ -6,6 +6,8 @@
 
 Turn the organizers' Dataplex profile scans into a queryable profile plus a per-season gate that decides which seasons the models may use. This is the "metadata-driven quality gate" in the pitch.
 
+The complete DQ contract is split by the models each check exercises: DE-03 owns start-year alignment, tournament-game uniqueness and winner ≠ loser; DE-05 owns closed-only inputs and the strict `pre_ncaa` cutoff; DE-07 owns tournament-participant → feature coverage. Those tests are blocking even though their SQL files live with the owning stories.
+
 ## Files you own
 
 - `models/01_dq/dq_column_profile.sql`

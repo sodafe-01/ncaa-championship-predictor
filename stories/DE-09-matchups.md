@@ -20,6 +20,8 @@ One training/scoring row per team per game, with "team A minus team B" feature d
 
 Table. Grain: `game_id` × `team_a_id`. Every row of `f_team_game_efficiency` becomes one row (each game appears twice, once per team as team A). Features always come from the **`pre_ncaa`** report card of the same season, so tournament rows use only pre-tournament information.
 
+Validate tournament scoring rows for `season` 2014–2016 first. Rows for the March 2018 tournament (`season = 2017`) may already flow through the generic model, but they do not become a required backtest input until the final extension; the 2017 pre-NCAA report card remains required for the forward forecast.
+
 | Column | Type | Rule |
 |---|---|---|
 | game_id, season, scheduled_date | | |
@@ -53,7 +55,7 @@ models:
     data_tests:
       - unique_combination_of_columns: {arguments: {combination_of_columns: [game_id, team_a_id]}}
       - row_count_between: {arguments: {min_count: 2, max_count: 2, group_by: [game_id]}}
-      - row_count_between: {arguments: {min_count: 134, max_count: 134, group_by: [season], where: "is_tournament_row"}}
+      - row_count_between: {arguments: {min_count: 134, max_count: 134, group_by: [season], where: "is_tournament_row AND season BETWEEN 2014 AND 2016"}}
       - expression_is_true: {arguments: {expression: "home_indicator = 0", where: "venue_a = 'neutral'"}}
     columns:
       - name: label_a_wins
@@ -88,7 +90,7 @@ scripts/verify.sh
 
 ## Report back
 
-- Rows per season and tournament rows per season (134 each).
+- Rows per season and core tournament rows for `season` 2014–2016 (134 each); report `season = 2017` separately only with the March 2018 extension.
 - Share of rows by `venue_a`.
 
 ## Out of scope

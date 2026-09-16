@@ -33,7 +33,7 @@ Views (the folder default). Staging keeps every row; later layers filter.
 | alias | STRING | short code, e.g. `VILL` |
 | display_name | STRING | `CONCAT(market, ' ', name)` |
 | school_ncaa | STRING | |
-| conf_alias, conf_name | STRING | conference as of 2017-18; the per-season conference is in `stg_team_games` |
+| conf_alias, conf_name | STRING | current-master conference as of 2017-18; do not use this as historical membership |
 | code_ncaa, kaggle_team_id | INT64 | |
 | venue_id, venue_name, venue_city, venue_state | STRING | current home venue, used by the neutral-site rule |
 | venue_capacity | INT64 | |
@@ -90,7 +90,7 @@ Build from `mbb_teams_games_sr` joined to `stg_games`. Take `season_label`, `pos
 | Column | Type | Rule |
 |---|---|---|
 | game_id, season, season_label, scheduled_date | | |
-| team_id, market, name, alias, conf_alias, division_alias | STRING | conference and division at game time |
+| team_id, market, name, alias, conf_alias, division_alias | STRING | source-provided conference on the game row; preferred for team-season grouping, but not audited historical membership |
 | opp_id, opp_market, opp_alias, opp_conf_alias, opp_division_alias | STRING | |
 | is_home | BOOL | source `home_team` |
 | is_neutral | BOOL | from `stg_games` |
@@ -113,6 +113,7 @@ Build from `mbb_teams_games_sr` joined to `stg_games`. Take `season_label`, `pos
 - Every season 2013–2017 has 67 NCAA tournament games; the `ncaa_round` macro already handles the old round names in 2013-14 and 2014-15.
 - AP rank is 0 for unranked (27,153 home values), maximum 25.
 - `mbb_teams` holds the 2017-18 venue, and a few programs changed arenas, so `is_neutral` is a best-effort rule. Report its distribution.
+- `mbb_teams.conf_alias` is current-state. Downstream uses the most common per-game `conf_alias` for a team-season, but Sportradar remains best-available rather than authoritative conference history.
 - 2013-14 box scores are 66% missing; `has_box_stats` makes that visible without dropping rows.
 
 ## Tests first
@@ -131,6 +132,8 @@ models:
   - name: stg_games
     data_tests:
       - row_count_between: {arguments: {min_count: 29805, max_count: 29805}}
+      - row_count_between: {arguments: {min_count: 4, max_count: 4, where: "NOT is_closed"}}
+      - expression_is_true: {arguments: {expression: "is_closed = (status = 'closed')"}}
       - expression_is_true:
           arguments: {expression: "ncaa_round IS NOT NULL AND is_neutral", where: "postseason_kind = 'NCAA'"}
     columns:
@@ -217,6 +220,7 @@ Selecting the three models also runs their YAML tests and both singular tests.
 ## Report back
 
 - Row counts for the three views.
+- The four retained non-closed games and their raw statuses.
 - `is_neutral` share by `postseason_kind`.
 - Share of team-games with `has_box_stats` by season (expect about 0.34 for 2013 and about 1.0 for 2014–2017).
 

@@ -14,8 +14,14 @@ An AI-driven agentic solution to analyze NCAA league strengths/weaknesses, predi
 | Path | Description |
 |------|-------------|
 | `NCAA_Execution_Plan.md` | Full phase-by-phase execution plan (roles, phases, assessment matrix) |
+| `ncaa_data_engineering_plan.md` | Phase 1 data-engineering plan (discovery, staging, features, DQ) |
+| `team-spec.md` | Team game plan and station-by-station ownership |
+| `agent/` | Data Agent system prompt + golden queries |
 | `deck/` | Executive pitch deck (HTML slides → PowerPoint) |
 | `deck/NCAA_Execution_Plan.pptx` | Generated 10-slide executive briefing |
+
+> **Note:** The BigQuery models and warehouse tables are built collaboratively by
+> the team (dbt project per `team-spec.md`), not committed as standalone SQL here.
 
 ## Building the Deck
 

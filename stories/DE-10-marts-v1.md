@@ -30,7 +30,7 @@ Ratings come from the `pre_ncaa` scope (what was known before the tournament); t
 |---|---|---|
 | season, season_label, team_id | | |
 | team_name | STRING | `stg_teams.display_name` ('Villanova Wildcats') |
-| school, alias, conference | STRING | `market`, `alias`, `conf_alias` that season |
+| school, alias, conference | STRING | `market`, `alias`, best-available per-game `conf_alias` that season; not audited historical membership |
 | color_hex, logo_url | STRING | `stg_teams.color_hex`, `logo_medium` |
 | wins, losses, win_pct | | full scope |
 | pre_tourney_wins, pre_tourney_losses | INT64 | pre_ncaa scope |
@@ -38,6 +38,7 @@ Ratings come from the `pre_ncaa` scope (what was known before the tournament); t
 | strength_rank | INT64 | `rank_adj_net` |
 | tempo, efg_pct, turnover_pct, off_rebound_pct, ft_rate, opp_efg_pct, three_point_rate, three_point_pct | FLOAT64 | report-card columns |
 | schedule_strength | FLOAT64 | `sos_adj_net` |
+| conference_strength | FLOAT64 | conference mean `adj_net` from `f_team_season` |
 | last10_margin | FLOAT64 | `last10_net` |
 | ap_rank_before_tourney | INT64 | `ap_rank_last` |
 | returning_minutes_share | FLOAT64 | `ret_min_share` |
@@ -82,6 +83,8 @@ Ratings come from the `pre_ncaa` scope (what was known before the tournament); t
 | ncaa_avg_margin | FLOAT64 | |
 | champion_name | STRING | |
 | champion_pre_tourney_rank | INT64 | |
+
+**Conference provenance:** `conference` and every conference aggregation use the report card's most common per-game `conf_alias`, not the current-master value from `stg_teams`. YAML descriptions and dashboard/agent language must say that historical membership is best available and may not perfectly reflect realignment.
 
 ## Tests first
 
@@ -138,6 +141,7 @@ scripts/verify.sh
 
 - 2017-18 top 10 from `mart_team_profile` (team, conference, adj_margin, strength_rank).
 - 2017-18 conference ranking.
+- Confirmation that conference descriptions include the historical-membership caveat.
 - The four-row league trends table.
 
 ## Out of scope

@@ -1,0 +1,187 @@
+name: CI
+
+# Gates every PR into main and deploys on merge.
+# - validate: always-on, cheap structural gate (ruff + dbt parse). No secrets needed.
+#             This is the REQUIRED status check for merging.
+# - e2e:      PR-only full dbt build into an EPHEMERAL dataset (fast, n_sims=100)
+#             so a merge cannot break the end-to-end pipeline. Runs when BQ CI is enabled.
+# - deploy:   push-to-main full dbt build + tests into the shared dataset.
+#
+# Enable the BigQuery jobs by setting repo variable CI_BQ_ENABLED=true and secret GCP_SA_KEY.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GCP_PROJECT_ID: da-hackathon-2026
+  BQ_LOCATION: US
+  DBT_DIR: dbt
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Required gate: compiles the dbt project and lints scripts. No BigQuery.
+  # ---------------------------------------------------------------------------
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "No requirements.txt yet — skipping (nothing to validate)."
+          fi
+
+      - name: Ruff lint (scripts)
+        run: |
+          if [ -d scripts ] && command -v ruff >/dev/null 2>&1; then
+            ruff check scripts
+          else
+            echo "No scripts/ or ruff — skipping lint."
+          fi
+
+      - name: dbt parse (structural validation)
+        env:
+          GCP_ACCESS_TOKEN: parse-only
+          DBT_PROFILES_DIR: dbt
+        run: |
+          if [ -f "$DBT_DIR/dbt_project.yml" ]; then
+            [ -f "$DBT_DIR/packages.yml" ] && dbt deps --project-dir "$DBT_DIR" --profiles-dir "$DBT_DIR" || true
+            dbt parse --project-dir "$DBT_DIR" --profiles-dir "$DBT_DIR"
+          else
+            echo "No dbt project on this ref — skipping parse (non-dbt change)."
+          fi
+
+  # ---------------------------------------------------------------------------
+  # PR end-to-end build in an ephemeral dataset (proves the whole DAG runs).
+  # ---------------------------------------------------------------------------
+  e2e:
+    name: e2e (ephemeral build + tests)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && vars.CI_BQ_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard — dbt project present
+        id: guard
+        run: |
+          if [ -f "$DBT_DIR/dbt_project.yml" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: google-github-actions/auth@v2
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+
+      - uses: actions/setup-python@v5
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        run: pip install -r requirements.txt
+
+      - name: Ephemeral profile + dataset
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        run: |
+          echo "DBT_DATASET=ci_pr_${{ github.run_id }}" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/ci"
+          cat > "$RUNNER_TEMP/ci/profiles.yml" <<YAML
+          ncaa_longhorns:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: oauth
+                project: ${GCP_PROJECT_ID}
+                dataset: ci_pr_${{ github.run_id }}
+                location: ${BQ_LOCATION}
+                threads: 4
+                job_retries: 1
+                job_execution_timeout_seconds: 600
+                maximum_bytes_billed: 20000000000
+          YAML
+          bq --location="$BQ_LOCATION" mk -f --dataset "${GCP_PROJECT_ID}:ci_pr_${{ github.run_id }}"
+
+      - name: dbt build (ephemeral, reduced sims)
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        run: |
+          [ -f "$DBT_DIR/packages.yml" ] && dbt deps --project-dir "$DBT_DIR" --profiles-dir "$RUNNER_TEMP/ci" || true
+          dbt build --project-dir "$DBT_DIR" --profiles-dir "$RUNNER_TEMP/ci" --target ci \
+            --vars '{"n_sims": 100}'
+
+      - name: Drop ephemeral dataset
+        if: ${{ always() && steps.guard.outputs.ok == 'true' }}
+        run: bq rm -r -f -d "${GCP_PROJECT_ID}:ci_pr_${{ github.run_id }}" || true
+
+  # ---------------------------------------------------------------------------
+  # Deploy on merge to main: full build + tests into the shared dataset.
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: deploy (main)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.CI_BQ_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard — dbt project present
+        id: guard
+        run: |
+          if [ -f "$DBT_DIR/dbt_project.yml" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: google-github-actions/auth@v2
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: actions/setup-python@v5
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        run: pip install -r requirements.txt
+
+      - name: Deploy profile (shared dataset)
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ci"
+          cat > "$RUNNER_TEMP/ci/profiles.yml" <<YAML
+          ncaa_longhorns:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: oauth
+                project: ${GCP_PROJECT_ID}
+                dataset: texas_longhorns
+                location: ${BQ_LOCATION}
+                threads: 4
+                job_retries: 1
+                job_execution_timeout_seconds: 900
+                maximum_bytes_billed: 20000000000
+          YAML
+
+      - name: dbt build + test (full)
+        if: ${{ steps.guard.outputs.ok == 'true' }}
+        run: |
+          [ -f "$DBT_DIR/packages.yml" ] && dbt deps --project-dir "$DBT_DIR" --profiles-dir "$RUNNER_TEMP/ci" || true
+          dbt build --project-dir "$DBT_DIR" --profiles-dir "$RUNNER_TEMP/ci" --target ci

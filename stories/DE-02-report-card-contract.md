@@ -19,7 +19,7 @@ Freeze the report card's column names, types and meanings before any math exists
 
 Table. Grain: one row per `season` × `scope` × `team_id`. Division I teams only (351 per season). Seasons `var('first_model_season')` to `var('last_season')` (2014–2017).
 
-- `pre_ncaa` scope: games dated before that season's first NCAA tournament game (conference tournaments included). Use it for anything that predicts the tournament.
+- `pre_ncaa` scope: closed games dated strictly before that season's first proper NCAA tournament game (conference tournaments included). Use it for anything that predicts the tournament; never approximate this as only `postseason_kind != 'NCAA'`.
 - `full` scope: every closed game, postseason included. Use it to describe a finished season.
 
 Columns in this exact order. The skeleton casts NULL for every column filled by a later story.
@@ -32,7 +32,7 @@ Columns in this exact order. The skeleton casts NULL for every column filled by 
 | team_id | STRING | | DE-02 |
 | market | STRING | school name | DE-02 |
 | alias | STRING | short code | DE-02 |
-| conf_alias | STRING | the team's conference that season (most common `conf_alias` in its games) | DE-02 |
+| conf_alias | STRING | most common per-game `conf_alias` for the team-season; best available, not audited historical membership | DE-02 |
 | games | INT64 | closed games in scope, any opponent | DE-02 |
 | wins | INT64 | | DE-02 |
 | losses | INT64 | | DE-02 |
@@ -46,6 +46,7 @@ Columns in this exact order. The skeleton casts NULL for every column filled by 
 | adj_de | FLOAT64 | raw_de adjusted for opponent offense and venue | DE-07 |
 | adj_net | FLOAT64 | adj_oe − adj_de: the main strength rating | DE-07 |
 | sos_adj_net | FLOAT64 | average opponent adj_net | DE-07 |
+| conference_strength | FLOAT64 | mean `adj_net` for all teams with the same season, scope and `conf_alias` | DE-07 |
 | efg_pct | FLOAT64 | (FGM + 0.5 × 3PM) / FGA | DE-07 |
 | tov_pct | FLOAT64 | turnovers per possession | DE-07 |
 | orb_pct | FLOAT64 | ORB / (ORB + opponent DRB) | DE-07 |
@@ -81,6 +82,8 @@ Columns in this exact order. The skeleton casts NULL for every column filled by 
 - First NCAA game per season is `MIN(scheduled_date) WHERE postseason_kind = 'NCAA'` in `stg_games`: 2014-03-18, 2015-03-17, 2016-03-15, 2017-03-14, 2018-03-13. Conference tournaments always end before it.
 - D1 teams: `division_alias = 'D1'` on the team's own row (351 every season).
 - Count only `is_closed` games.
+- `conference_strength` belongs to DE2 and is calculated in DE-07 after final `adj_net`; ML2 consumes this column rather than recomputing conference aggregates.
+- Conference membership is source-provided and may not perfectly reproduce historical realignment. Carry this caveat into YAML descriptions and downstream marts.
 - Skeleton pattern: `CAST(NULL AS FLOAT64) AS tempo`, and so on, in contract order.
 - Describe every column in the YAML; the Data Agent and Knowledge Catalog read these descriptions.
 

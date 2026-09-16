@@ -11,6 +11,7 @@ One clean row per team per game with possessions and per-100-possession efficien
 - `models/02_features/f_team_game_efficiency.sql`
 - `models/02_features/_f_team_game_efficiency.yml`
 - `data_tests/f_team_game_efficiency_mirror.sql`
+- `data_tests/f_team_game_efficiency_scope.sql`
 
 ## Inputs
 
@@ -83,6 +84,24 @@ models:
 
 The last `row_count_between` returns seasons with *more than 25* invalid rows. Seasons with none don't appear, which passes.
 
+`data_tests/f_team_game_efficiency_scope.sql`:
+
+```sql
+-- Feature rows are closed, and the pre-NCAA flag is exactly the strict date cutoff.
+SELECT 'non-closed game reached features' AS failed_check, f.game_id
+FROM {{ ref('f_team_game_efficiency') }} f
+JOIN {{ ref('stg_games') }} g USING (game_id)
+WHERE NOT g.is_closed
+UNION ALL
+SELECT 'pre_ncaa flag differs from first-NCAA-date cutoff', game_id
+FROM {{ ref('f_team_game_efficiency') }}
+WHERE in_pre_ncaa_scope IS DISTINCT FROM (scheduled_date < first_ncaa_date)
+UNION ALL
+SELECT 'national postseason game leaked into pre_ncaa', game_id
+FROM {{ ref('f_team_game_efficiency') }}
+WHERE in_pre_ncaa_scope AND postseason_kind IN ('NCAA', 'NIT', 'CBI', 'CIT')
+```
+
 `data_tests/f_team_game_efficiency_mirror.sql`:
 
 ```sql
@@ -103,6 +122,7 @@ scripts/verify.sh
 ## Report back
 
 - Rows per season and invalid rows per season.
+- Confirmation that the closed-only and strict cutoff test returned zero rows.
 - Average `game_poss` and `oe` per season.
 
 ## Out of scope
