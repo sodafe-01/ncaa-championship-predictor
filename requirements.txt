@@ -1,2 +1,3 @@
 dbt-core==1.11.7
 dbt-bigquery==1.11.1
+ruff>=0.8

@@ -5,7 +5,7 @@ profile: ncaa_longhorns
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
-test-paths: ["tests"]
+test-paths: ["data_tests", "tests"]
 seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
@@ -14,10 +14,12 @@ docs-paths: ["docs"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages", "logs"]
 
-# Locked: this hackathon slice is a single season.
-# Team spec: season 2017 = 2017-18. Filter every model with this var.
 vars:
-  ncaa_season: 2017
+  first_model_season: 2014
+  last_season: 2017
+  forecast_season: 2018
+  sim_seed: 42
+  n_sims: 10000
 
 models:
   ncaa_longhorns:
@@ -28,7 +30,7 @@ models:
       +materialized: view
       +tags: ["stg", "de1"]
     01_dq:
-      +materialized: table
+      +materialized: view
       +tags: ["dq", "de1"]
     02_features:
       +materialized: table
@@ -42,7 +44,6 @@ models:
     05_ai:
       +materialized: table
       +tags: ["ai", "ae"]
-      +enabled: false
     06_marts:
       +materialized: table
       +tags: ["mart", "de2"]

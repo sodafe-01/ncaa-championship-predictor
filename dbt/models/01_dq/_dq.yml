@@ -1,9 +1,0 @@
-version: 2
-
-models:
-  - name: dq_profile_snapshot
-    description: "DE1. Latest Dataplex column profiles from ncaa_basketball_scan_results."
-  - name: dq_column_glossary
-    description: "DE1. Maps curated columns to NCAA Basketball Glossary terms."
-  - name: dq_assertions
-    description: "DE1. Blocking and warn checks for season 2017 (PK, join rate, no label leak)."

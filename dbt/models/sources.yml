@@ -7,18 +7,35 @@ sources:
     schema: ncaa_basketball
     tables:
       - name: mbb_teams
+        columns:
+          - name: id
+            data_tests: [unique, not_null]
       - name: mbb_historical_teams_seasons
       - name: mbb_historical_teams_games
       - name: mbb_historical_tournament_games
       - name: mbb_games_sr
+        columns:
+          - name: game_id
+            data_tests: [unique, not_null]
       - name: mbb_teams_games_sr
+        data_tests:
+          - unique_combination_of_columns:
+              arguments:
+                combination_of_columns: [game_id, team_id]
       - name: mbb_players_games_sr
+        data_tests:
+          - unique_combination_of_columns:
+              arguments:
+                combination_of_columns: [game_id, player_id]
       - name: mbb_pbp_sr
       - name: mascots
       - name: team_colors
+      - name: tables_meta
+        description: BigQuery __TABLES__ metadata (row counts and bytes).
+        identifier: __TABLES__
 
-  - name: ncaa_catalog
-    description: Knowledge Catalog data-profile scan export. Read-only. Quality source of truth.
+  - name: ncaa_scans
+    description: Knowledge Catalog data-profile scan export. Read-only.
     database: da-hackathon-2026
     schema: ncaa_basketball_scan_results
     tables:
