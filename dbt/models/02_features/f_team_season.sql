@@ -21,8 +21,8 @@ d1_teams AS (
   SELECT
     season,
     team_id,
-    ANY_VALUE(market) AS market,
-    ANY_VALUE(alias) AS alias
+    MIN(market) AS market,
+    MIN(alias) AS alias
   FROM {{ ref('stg_team_games') }}
   WHERE division_alias = 'D1'
     AND season BETWEEN {{ var('first_model_season') }} AND {{ var('last_season') }}
@@ -40,7 +40,7 @@ spine AS (
   CROSS JOIN scopes AS s
 ),
 
-in_scope AS (
+scoped_games AS (
   SELECT
     tg.season,
     sc.scope,
@@ -52,13 +52,22 @@ in_scope AS (
     ON n.season = tg.season
   CROSS JOIN scopes AS sc
   WHERE tg.is_closed
-    AND tg.win IS NOT NULL
     AND tg.division_alias = 'D1'
     AND tg.season BETWEEN {{ var('first_model_season') }} AND {{ var('last_season') }}
     AND (
       sc.scope = 'full'
       OR tg.scheduled_date < n.first_ncaa_date
     )
+),
+
+record_games AS (
+  SELECT
+    season,
+    scope,
+    team_id,
+    win
+  FROM scoped_games
+  WHERE win IS NOT NULL
 ),
 
 conf_mode AS (
@@ -77,7 +86,7 @@ conf_mode AS (
         PARTITION BY season, scope, team_id
         ORDER BY COUNT(*) DESC, conf_alias
       ) AS rn
-    FROM in_scope
+    FROM scoped_games
     GROUP BY season, scope, team_id, conf_alias
   )
   WHERE rn = 1
@@ -90,8 +99,8 @@ agg AS (
     team_id,
     COUNT(*) AS games,
     COUNTIF(win) AS wins,
-    COUNT(*) - COUNTIF(win) AS losses
-  FROM in_scope
+    COUNTIF(NOT win) AS losses
+  FROM record_games
   GROUP BY season, scope, team_id
 )
 

@@ -29,6 +29,7 @@ models:
       - name: scope
         description: pre_ncaa for tournament prediction inputs; full for a finished season.
         data_tests:
+          - not_null
           - accepted_values:
               arguments:
                 values: ['pre_ncaa', 'full']
@@ -45,10 +46,13 @@ models:
           scope. Best available source signal, not audited historical membership.
       - name: games
         description: Closed games with a result (win IS NOT NULL) in scope, any opponent.
+        data_tests: [not_null]
       - name: wins
         description: Closed wins in scope.
+        data_tests: [not_null]
       - name: losses
         description: Closed non-wins in scope (games − wins).
+        data_tests: [not_null]
       - name: win_pct
         description: wins / games.
         data_tests:
@@ -77,7 +81,8 @@ models:
       - name: conference_strength
         description: >
           Mean adj_net for all teams with the same season, scope and
-          conf_alias (DE-07).
+          conf_alias (DE-07). Conference membership is the best available
+          source signal and is not audited historical membership.
       - name: efg_pct
         description: (FGM + 0.5 × 3PM) / FGA (DE-07).
       - name: tov_pct
