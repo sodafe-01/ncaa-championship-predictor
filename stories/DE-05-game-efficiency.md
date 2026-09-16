@@ -6,6 +6,12 @@
 
 One clean row per team per game with possessions and per-100-possession efficiency, ready for the opponent-adjusted ratings in DE-07.
 
+## As built (2026-09-16)
+
+Built and verified: 10/10 tests pass. One difference from the story:
+
+1. **CIT first-round games before the NCAA opener are excluded.** Every season the CIT first round is played the Monday before the First Four (2015-03-16, 2016-03-14, 2017-03-13, 2018-03-12), and no regular-season or conference-tournament game falls between that Monday and the first NCAA game. Under the strict `scheduled_date < first_ncaa_date` cutoff those games land in `pre_ncaa`, which the scope test's "national postseason game leaked into pre_ncaa" check forbids, while the cutoff check forbids moving the flag. No model can pass both with those rows present, so they are left out: 6 games, 12 rows (2 / 2 / 2 / 6 for 2014-15 to 2017-18). Rows per season are 10,996 / 11,020 / 11,066 / 11,074. The cutoff convention and every test are unchanged.
+
 ## Files you own
 
 - `models/02_features/f_team_game_efficiency.sql`

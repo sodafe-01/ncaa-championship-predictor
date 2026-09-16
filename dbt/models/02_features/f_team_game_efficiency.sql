@@ -56,9 +56,14 @@ base AS (
   INNER JOIN ncaa_openers AS n
     ON n.season = tg.season
   WHERE tg.is_closed
+    -- one closed 2015-16 game (UTSA vs Central Arkansas) is recorded 0-0 with no result
+    AND tg.win IS NOT NULL
     AND tg.is_d1_matchup
     AND tg.has_box_stats
     AND tg.season BETWEEN {{ var('first_model_season') }} AND {{ var('last_season') }}
+    -- The CIT first round is played the Monday before the First Four: under the strict first-NCAA-date
+    -- cutoff those games would sit in pre_ncaa, which must never hold a national postseason game.
+    AND NOT (tg.postseason_kind IN ('NIT', 'CBI', 'CIT') AND tg.scheduled_date < n.first_ncaa_date)
 )
 
 SELECT

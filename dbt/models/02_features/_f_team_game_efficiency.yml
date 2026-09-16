@@ -3,33 +3,21 @@ version: 2
 models:
   - name: f_team_game_efficiency
     description: >
-      One row per team per closed D1-vs-D1 game with box stats, seasons
-      first_model_season to last_season. Possessions and per-100 efficiencies
-      for DE-07 opponent adjustment. Broken box scores are kept and flagged.
+      One row per team per closed D1-vs-D1 game with a result and a usable box score, seasons
+      2014-15 to 2017-18. National postseason games played before the season's first NCAA tournament
+      game (CIT first-round games on the Monday before the First Four: 6 games, 12 rows) are excluded,
+      so the strict pre_ncaa date cutoff never admits a national postseason game. Possessions and per-100-possession efficiencies for the DE-07 opponent
+      adjustment. Both teams share game_poss, so one team's oe equals its opponent's de. Broken box
+      scores are kept and flagged with is_valid_efficiency_row.
     data_tests:
-      - unique_combination_of_columns:
-          arguments:
-            combination_of_columns: [game_id, team_id]
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [game_id, team_id]}}
+      - row_count_between: {arguments: {min_count: 2, max_count: 2, group_by: [game_id]}}
+      - row_count_between: {arguments: {min_count: 10500, max_count: 11500, group_by: [season]}}
       - row_count_between:
-          arguments:
-            min_count: 2
-            max_count: 2
-            group_by: [game_id]
-      - row_count_between:
-          arguments:
-            min_count: 10500
-            max_count: 11500
-            group_by: [season]
-      - row_count_between:
-          arguments:
-            min_count: 0
-            max_count: 25
-            group_by: [season]
-            where: "NOT is_valid_efficiency_row"
+          arguments: {min_count: 0, max_count: 25, group_by: [season]}
+          config: {where: "NOT is_valid_efficiency_row"}
       - expression_is_true:
-          arguments:
-            expression: "NOT in_pre_ncaa_scope"
-            where: "postseason_kind = 'NCAA'"
+          arguments: {expression: "NOT in_pre_ncaa_scope", where: "postseason_kind = 'NCAA'"}
     columns:
       - name: game_id
         description: Sportradar game id.
