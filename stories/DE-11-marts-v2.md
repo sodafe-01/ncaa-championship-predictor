@@ -43,6 +43,8 @@ The presentation-ready tables behind the prediction: title odds per team, the ba
 
 ### `mart_backtest` — one row per season × model
 
+Core coverage is the 2015–2017 tournaments (`season` 2014–2016). Surface the 2018 tournament row only when ML2 completes that final extension; its absence does not block the core mart or demo.
+
 | Column | Type | Meaning |
 |---|---|---|
 | season, season_label, model_name | | |
@@ -66,6 +68,7 @@ question_id, question, expected_sql, expected_answer, verified_on (DATE), notes.
 ## Tests first
 
 - `unique_combination_of_columns`: (`scenario`, `team_id`) for odds and scouting; (`season`, `model_name`) for backtests; `question_id` unique.
+- Core `mart_backtest` coverage includes `season` 2014–2016. Require `season = 2017` only when the March 2018 extension is declared complete.
 - `accepted_range` 0–1 on every probability column.
 - `data_tests/mart_title_odds_sum_to_one.sql`: return scenarios where `ABS(SUM(p_champion) - 1) > 0.01`.
 - `marts_have_column_descriptions` (from DE-10) covers these marts automatically.
@@ -80,7 +83,7 @@ scripts/verify.sh
 ## Report back
 
 - Forecast top 10 by `p_champion`.
-- The backtest table with both baselines.
+- The 2015–2017 core backtest table with both baselines; report the 2018 record-only row separately if the extension exists.
 
 ## Out of scope
 

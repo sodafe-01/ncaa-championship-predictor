@@ -111,10 +111,18 @@ models:
   - name: stg_tournament_results
     data_tests:
       - row_count_between: {arguments: {min_count: 2117, max_count: 2117}}
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, win_team_id, lose_team_id]}}
       - expression_is_true: {arguments: {expression: "season = tournament_year - 1"}}
+      - expression_is_true: {arguments: {expression: "win_team_id != lose_team_id"}}
       - row_count_between:
           arguments: {min_count: 1, max_count: 1, group_by: [tournament_year], where: "ncaa_round = 'FINAL'"}
     columns:
+      - name: win_team_id
+        data_tests:
+          - relationships: {arguments: {to: "ref('stg_teams')", field: team_id}}
+      - name: lose_team_id
+        data_tests:
+          - relationships: {arguments: {to: "ref('stg_teams')", field: team_id}}
       - name: win_seed
         data_tests:
           - accepted_range: {arguments: {min_value: 1, max_value: 16}}
@@ -159,6 +167,7 @@ scripts/verify.sh
 ## Report back
 
 - Row counts for the four views.
+- Results of the explicit season-alignment, tournament-game uniqueness, winner/loser inequality and team-key relationship tests.
 - Share of played player rows with `class`, by season.
 - Result of the champions cross-check (should return no rows).
 

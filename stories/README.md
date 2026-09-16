@@ -21,6 +21,10 @@ Pick up work with `/story next DE1`, `/story next DE2`, or `/story DE-NN`. The s
 
 Status values: `todo` · `in-progress` · `blocked (reason)` · `done`. The `f_team_season` column contract is **not frozen yet** (DE-02 freezes it).
 
+## Coverage priority
+
+Build and validate all pre-2018 tournament work first. For backtests, 2015–2017 (canonical `season` 2014–2016) are core; the March 2018 tournament (`season = 2017`, SR-only and seedless) is a last, time-permitting extension. The 2017-18 **pre-NCAA** snapshot is still core because ML2 needs it for the 2018-19 forecast—do not interpret the optional 2018 backtest as permission to omit that input.
+
 ## Two lanes in parallel
 
 - **DE1:** DE-01 → DE-03 → DE-04 → DE-08, then help with DE-10 descriptions and the Captain's Knowledge Catalog work.
@@ -44,4 +48,6 @@ DE-01 is the only story that blocks everyone. Do it first.
 - Use `source()`, `ref()` and `macros/conventions.sql`. Never re-derive season labels, NCAA rounds, neutral sites or possessions.
 - Generic tests available: `unique`, `not_null`, `accepted_values`, `relationships`, plus `unique_combination_of_columns`, `expression_is_true`, `row_count_between` and `accepted_range` from `macros/generic_tests.sql`. Pass arguments under `arguments:`.
 - If the data contradicts a story's expectation, stop and report the query and numbers. Never loosen a test to pass.
-- Staging (`stg_`) keeps every row; features (`f_`) filter to model seasons and D1 games.
+- Staging (`stg_`) keeps every source row, including the four non-closed games. Game-derived features, models and evaluations use only `is_closed` rows unless a story explicitly says otherwise.
+- `pre_ncaa` is always `scheduled_date <` that season's first proper NCAA tournament game. This retains conference tournaments and excludes NCAA/NIT/CBI/CIT games on or after the cutoff.
+- Team-season conference is the most common per-game `conf_alias`, not the current master value. It is the best available source signal, not audited historical membership; every downstream description and narrative keeps that caveat.

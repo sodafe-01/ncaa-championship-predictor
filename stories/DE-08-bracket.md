@@ -6,6 +6,8 @@
 
 Rebuild each season's 67-game NCAA bracket as a tree of slots, so the simulator can play it round by round and backtests can compare with what really happened. The data has no bracket table and no 2018 seeds, so the tree comes from the real results.
 
+**Delivery order:** validate `season` 2013–2016 (tournaments through 2017) first. Treat `season = 2017` (the March 2018 tournament) as the final extension after the core trees work. Its absence must not delay handoff of the pre-2018 brackets; it is not the same as the required 2017-18 `pre_ncaa` feature snapshot used for the 2018-19 forecast.
+
 ## Files you own
 
 - `models/00_stg/stg_bracket.sql` (put `{{ config(materialized='table') }}` at the top; the joins are too heavy for a view)
@@ -123,7 +125,7 @@ scripts/verify.sh
 ## Report back
 
 - Slots per season.
-- The 2017-18 champion's path: slot ids from R64 to FINAL.
+- A core champion's path: slot ids from R64 to FINAL; add the 2017-18 champion's path only with the March 2018 extension.
 - Result of the seed-sum check for 2013–2016.
 
 ## Out of scope
