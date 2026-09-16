@@ -21,6 +21,7 @@ else
     bq/sql/02_matchup_training.sql
     bq/sql/03_matchup_model.sql
     bq/sql/04_v_champion_probabilities.sql
+    bq/sql/06_backtest.sql
     bq/sql/00_descriptions.sql
   )
 fi

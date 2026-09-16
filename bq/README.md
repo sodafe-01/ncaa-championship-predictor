@@ -14,8 +14,21 @@ Version-controlled BigQuery SQL for the NCAA championship predictor, wired to:
 | `sql/02_matchup_training.sql` | `matchup_training` table | Balanced tournament matchups |
 | `sql/03_matchup_model.sql` | `matchup_model` (BQML) | Logistic-regression classifier |
 | `sql/04_v_champion_probabilities.sql` | `v_champion_probabilities` view | Championship-probability proxy |
+| `sql/06_backtest.sql` | `matchup_model_backtest` + `backtest_results` | Temporal split, model vs seed baseline |
 | `sql/00_descriptions.sql` | table descriptions | Grounds the Data Agent |
 | `sql/05_v_team_scouting.sql` | `v_team_scouting` view | **Optional** — needs a Vertex AI connection |
+
+## Model performance
+
+| Metric | Value |
+|--------|-------|
+| In-sample AUC (`ML.EVALUATE`) | 0.776 |
+| Out-of-sample accuracy (2010+, 932 matchups) | 68.9% |
+| Seed-only baseline accuracy | 68.6% |
+
+**Finding:** seed + regular-season win% alone barely beats the seed baseline.
+Next lever: add efficiency, tempo, and strength-of-schedule features from
+`mbb_teams_games_sr` to create real edge over seeding.
 
 Placeholders `__PROJECT__` / `__DATASET__` / `__CONNECTION__` are substituted at deploy time.
 
