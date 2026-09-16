@@ -14,13 +14,13 @@ flowchart TB
         EX["Executive / Analyst"]
     end
 
-    subgraph ORCH["Reasoning & Orchestration"]
-        GEM["Gemini Enterprise<br/>(conversation, reasoning, synthesis)"]
-        AGENT["BigQuery Data Agent<br/>(NL to SQL, grounded in Knowledge Catalog)"]
+    subgraph ORCH["Reasoning and Orchestration"]
+        GEM["Gemini Enterprise<br/>conversation, reasoning, synthesis"]
+        AGENT["BigQuery Data Agent<br/>NL to SQL, grounded in Knowledge Catalog"]
     end
 
     subgraph GOV["Governed Semantic Layer — BigQuery"]
-        CUR["Curated tables<br/>feat_/fct_/dim_"]
+        CUR["Curated tables<br/>feat_ / fct_ / dim_"]
         BQML["BQML models<br/>ML.PREDICT"]
         AIGEN["AI.GENERATE routines<br/>scouting narratives"]
         SIM["Bracket simulation<br/>champion probabilities"]
@@ -32,17 +32,17 @@ flowchart TB
         CAT["Knowledge Catalog<br/>NCAA Basketball Glossary"]
     end
 
-    EX -->|"Who wins & why?"| GEM
-    GEM -->|delegates data questions| AGENT
-    AGENT -->|trusted SQL| CUR
+    EX -->|"Who wins and why?"| GEM
+    GEM -->|"delegates data questions"| AGENT
+    AGENT -->|"trusted SQL"| CUR
     AGENT --> BQML
     AGENT --> AIGEN
     CUR --> SIM
     BQML --> SIM
-    SIM -->|P(champion) per team| AGENT
-    AIGEN -->|grounded narrative| AGENT
-    AGENT -->|results + evidence| GEM
-    GEM -->|answer + confidence| EX
+    SIM -->|"P of champion per team"| AGENT
+    AIGEN -->|"grounded narrative"| AGENT
+    AGENT -->|"results and evidence"| GEM
+    GEM -->|"answer and confidence"| EX
 
     RAW --> CUR
     SCAN --> CUR
@@ -86,7 +86,7 @@ sequenceDiagram
     actor Exec as Executive
     participant Gem as Gemini Enterprise
     participant Agent as BigQuery Data Agent
-    participant BQ as BigQuery (curated + BQML)
+    participant BQ as BigQuery curated plus BQML
 
     Exec->>Gem: "Who wins the championship, and why?"
     Gem->>Agent: Decompose into data questions
@@ -94,7 +94,7 @@ sequenceDiagram
     BQ-->>Agent: Champion probabilities + features
     Agent->>BQ: AI.GENERATE scouting narrative
     BQ-->>Agent: Grounded strengths / weaknesses
-    Agent-->>Gem: Results + evidence (query-traceable)
+    Agent-->>Gem: Results and evidence, query-traceable
     Gem-->>Exec: Prediction + confidence + reasoning
 ```
 
