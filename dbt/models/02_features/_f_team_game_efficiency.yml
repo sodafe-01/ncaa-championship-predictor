@@ -1,0 +1,146 @@
+version: 2
+
+models:
+  - name: f_team_game_efficiency
+    description: >
+      One row per team per closed D1-vs-D1 game with box stats, seasons
+      first_model_season to last_season. Possessions and per-100 efficiencies
+      for DE-07 opponent adjustment. Broken box scores are kept and flagged.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [game_id, team_id]
+      - row_count_between:
+          arguments:
+            min_count: 2
+            max_count: 2
+            group_by: [game_id]
+      - row_count_between:
+          arguments:
+            min_count: 10500
+            max_count: 11500
+            group_by: [season]
+      - row_count_between:
+          arguments:
+            min_count: 0
+            max_count: 25
+            group_by: [season]
+            where: "NOT is_valid_efficiency_row"
+      - expression_is_true:
+          arguments:
+            expression: "NOT in_pre_ncaa_scope"
+            where: "postseason_kind = 'NCAA'"
+    columns:
+      - name: game_id
+        description: Sportradar game id.
+      - name: season
+        description: Season start year (2017 = 2017-18).
+      - name: scheduled_date
+        description: Game date.
+      - name: team_id
+        description: Focal team Sportradar id.
+      - name: opp_id
+        description: Opponent Sportradar id.
+      - name: conf_alias
+        description: Focal team conference at game time.
+      - name: opp_conf_alias
+        description: Opponent conference at game time.
+      - name: is_home
+        description: True when the focal team is the listed home team.
+      - name: is_neutral
+        description: Neutral-site flag from stg_games.
+      - name: venue_type
+        description: home, away, or neutral.
+      - name: postseason_kind
+        description: REG, CONF, NCAA, NIT, CBI, CIT, or OTHER from stg_games.
+      - name: ncaa_round
+        description: FF … FINAL when this is an NCAA tournament game; otherwise NULL.
+      - name: first_ncaa_date
+        description: Date of that season's first NCAA tournament game.
+      - name: in_pre_ncaa_scope
+        description: True when scheduled_date is before first_ncaa_date.
+      - name: game_seq
+        description: 1 = the team's first game of the season in this table (date, then game_id).
+      - name: win
+        description: Whether the focal team won.
+      - name: points
+        description: Points scored by the focal team.
+      - name: opp_points
+        description: Points scored by the opponent.
+      - name: margin
+        description: points − opp_points.
+      - name: fgm
+        description: Field goals made.
+      - name: fga
+        description: Field goals attempted.
+      - name: tpm
+        description: Three-pointers made.
+      - name: tpa
+        description: Three-pointers attempted.
+      - name: ftm
+        description: Free throws made.
+      - name: fta
+        description: Free throws attempted.
+      - name: orb
+        description: Offensive rebounds.
+      - name: drb
+        description: Defensive rebounds.
+      - name: tov
+        description: Turnovers including team turnovers.
+      - name: opp_fgm
+        description: Opponent field goals made.
+      - name: opp_fga
+        description: Opponent field goals attempted.
+      - name: opp_tpm
+        description: Opponent three-pointers made.
+      - name: opp_tpa
+        description: Opponent three-pointers attempted.
+      - name: opp_ftm
+        description: Opponent free throws made.
+      - name: opp_fta
+        description: Opponent free throws attempted.
+      - name: opp_orb
+        description: Opponent offensive rebounds.
+      - name: opp_drb
+        description: Opponent defensive rebounds.
+      - name: opp_tov
+        description: Opponent turnovers including team turnovers.
+      - name: poss
+        description: Estimated possessions for the focal team from stg_team_games.
+      - name: opp_poss
+        description: Estimated possessions for the opponent from stg_team_games.
+      - name: game_poss
+        description: (poss + opp_poss) / 2; identical for both teams in a game.
+        data_tests: [not_null]
+      - name: is_valid_efficiency_row
+        description: True when game_poss is between 45 and 115. DE-07 ignores false rows.
+      - name: oe
+        description: 100 * points / game_poss.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 25
+                max_value: 175
+                where: "is_valid_efficiency_row"
+      - name: de
+        description: 100 * opp_points / game_poss.
+      - name: net
+        description: oe − de.
+      - name: efg_pct
+        description: (fgm + 0.5 * tpm) / fga.
+      - name: tov_pct
+        description: tov / game_poss.
+      - name: orb_pct
+        description: orb / (orb + opp_drb).
+      - name: ftr
+        description: fta / fga.
+      - name: three_par
+        description: tpa / fga.
+      - name: opp_efg_pct
+        description: Opponent eFG%.
+      - name: opp_tov_pct
+        description: Opponent turnovers / game_poss.
+      - name: opp_ftr
+        description: Opponent FTA / FGA.
+      - name: drb_pct
+        description: drb / (drb + opp_orb).

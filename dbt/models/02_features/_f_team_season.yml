@@ -1,0 +1,253 @@
+version: 2
+
+models:
+  - name: f_team_season
+    description: >
+      Report card: one row per season × scope × D1 team.
+      Scopes are pre_ncaa (games before that season's first NCAA tournament game)
+      and full (every closed game). Grain and names are frozen in DE-02.
+      adj_net is the team-strength rating after venue and opponent adjustment.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [season, scope, team_id]
+      - row_count_between:
+          arguments:
+            min_count: 351
+            max_count: 351
+            group_by: [season, scope]
+      - expression_is_true:
+          arguments:
+            expression: "wins + losses = games"
+      - expression_is_true:
+          arguments:
+            expression: "experience_index IS NULL"
+            where: "season < 2017"
+      - expression_is_true:
+          arguments:
+            expression: "experience_index IS NOT NULL"
+            where: "season = 2017"
+    columns:
+      - name: season
+        description: Season start year (2017 = 2017-18).
+        data_tests: [not_null]
+      - name: season_label
+        description: Academic label, e.g. 2017-18.
+      - name: scope
+        description: pre_ncaa for tournament prediction inputs; full for a finished season.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['pre_ncaa', 'full']
+      - name: team_id
+        description: Sportradar team id.
+        data_tests: [not_null]
+      - name: market
+        description: School name, e.g. Villanova.
+      - name: alias
+        description: Short team code, e.g. VILL.
+      - name: conf_alias
+        description: Most common conf_alias on the team's games in this season and scope.
+      - name: games
+        description: Closed games in scope, any opponent.
+      - name: wins
+        description: Closed wins in scope.
+      - name: losses
+        description: Closed non-wins in scope (games − wins).
+      - name: win_pct
+        description: wins / games.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: d1_games
+        description: Valid D1-vs-D1 games used for efficiency.
+      - name: tempo
+        description: Average game_poss in valid efficiency games.
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 55
+                max_value: 85
+      - name: raw_oe
+        description: 100 * SUM(points) / SUM(game_poss) on valid games.
+      - name: raw_de
+        description: 100 * SUM(opp_points) / SUM(game_poss) on valid games.
+      - name: raw_net
+        description: raw_oe − raw_de.
+      - name: adj_oe
+        description: raw_oe adjusted for opponent defense and venue.
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 70
+                max_value: 140
+      - name: adj_de
+        description: raw_de adjusted for opponent offense and venue.
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 70
+                max_value: 140
+      - name: adj_net
+        description: adj_oe − adj_de; main strength rating.
+        data_tests: [not_null]
+      - name: sos_adj_net
+        description: Average opponent adj_net over the team's valid games.
+        data_tests: [not_null]
+      - name: efg_pct
+        description: (SUM(FGM) + 0.5 × SUM(3PM)) / SUM(FGA).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 0.35
+                max_value: 0.65
+      - name: tov_pct
+        description: SUM(turnovers) / SUM(game_poss).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0.08
+                max_value: 0.30
+      - name: orb_pct
+        description: SUM(ORB) / (SUM(ORB) + SUM(opponent DRB)).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0.12
+                max_value: 0.50
+      - name: ftr
+        description: SUM(FTA) / SUM(FGA).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0.15
+                max_value: 0.65
+      - name: opp_efg_pct
+        description: Opponents' eFG% from season sums.
+      - name: opp_tov_pct
+        description: Opponents' turnovers / SUM(game_poss).
+      - name: drb_pct
+        description: SUM(DRB) / (SUM(DRB) + SUM(opponent ORB)).
+      - name: opp_ftr
+        description: Opponents' FTA / FGA from season sums.
+      - name: three_par
+        description: SUM(3PA) / SUM(FGA).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0.15
+                max_value: 0.65
+      - name: three_pct
+        description: SUM(3PM) / SUM(3PA).
+      - name: ft_pct
+        description: SUM(FTM) / SUM(FTA).
+      - name: last10_net
+        description: Raw net efficiency over the last 10 D1 games in scope.
+      - name: ap_rank_last
+        description: AP rank at the team's last closed game in scope; NULL = unranked.
+      - name: experience_index
+        description: Minutes-weighted class (FR=1 … GR=5); 2017-18 only.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: ret_min_share
+        description: Share of minutes expected back next season (from f_roster_continuity).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: ret_pts_share
+        description: Share of points expected back next season (from f_roster_continuity).
+      - name: ret_basis
+        description: actual (2014-15 to 2016-17) or class_proxy (2017-18).
+      - name: program_win_pct_5y
+        description: Win percent over the previous five seasons (s−5 to s−1).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: rank_adj_net
+        description: 1 = best adj_net in season × scope.
+        data_tests: [not_null]
+      - name: pctl_adj_oe
+        description: 0–1, 1 = best offense.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_adj_de
+        description: 0–1, 1 = best defense / lowest adj_de.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_adj_net
+        description: 0–1, 1 = best net.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_tempo
+        description: 0–1, 1 = fastest.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_efg_pct
+        description: 0–1, 1 = best eFG%.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_tov_pct
+        description: 0–1, 1 = fewest turnovers.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_orb_pct
+        description: 0–1, 1 = best ORB%.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_ftr
+        description: 0–1, 1 = most free-throw attempts.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_three_par
+        description: 0–1, 1 = most three-point heavy.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: pctl_opp_efg_pct
+        description: 0–1, 1 = best defense (lowest opponent eFG).
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1

@@ -15,7 +15,7 @@ WHERE NOT ({{ expression }})
 {%- endif %}
 {% endtest %}
 
-{% test row_count_between(model, min_count, max_count, group_by=None) %}
+{% test row_count_between(model, min_count, max_count, group_by=None, where=None) %}
 WITH counted AS (
   SELECT
     {%- if group_by %}
@@ -23,6 +23,9 @@ WITH counted AS (
     {%- endif %}
     COUNT(*) AS n
   FROM {{ model }}
+  {%- if where %}
+  WHERE {{ where }}
+  {%- endif %}
   {%- if group_by %}
   GROUP BY {{ group_by | join(', ') }}
   {%- endif %}

@@ -1,0 +1,116 @@
+version: 2
+
+models:
+  - name: f_matchups
+    description: >
+      One row per team per game from f_team_game_efficiency. Features are
+      team A minus team B from the same season's pre_ncaa report card, so
+      tournament games do not leak in-tournament information.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [game_id, team_a_id]
+      - row_count_between:
+          arguments:
+            min_count: 2
+            max_count: 2
+            group_by: [game_id]
+      - row_count_between:
+          arguments:
+            min_count: 134
+            max_count: 134
+            group_by: [season]
+            where: "is_tournament_row"
+      - expression_is_true:
+          arguments:
+            expression: "home_indicator = 0"
+            where: "venue_a = 'neutral'"
+    columns:
+      - name: game_id
+        description: Sportradar game id.
+      - name: season
+        description: Season start year (2017 = 2017-18).
+      - name: scheduled_date
+        description: Game date.
+      - name: postseason_kind
+        description: REG, CONF, NCAA, NIT, CBI, CIT, or OTHER.
+      - name: ncaa_round
+        description: FF … FINAL when this is an NCAA tournament game; otherwise NULL.
+      - name: in_pre_ncaa_scope
+        description: True when the game is dated before that season's first NCAA game.
+      - name: is_training_row
+        description: Same as in_pre_ncaa_scope; walk-forward training uses these rows.
+      - name: is_tournament_row
+        description: True when postseason_kind is NCAA.
+      - name: team_a_id
+        description: Focal team (the row's "team A").
+      - name: team_b_id
+        description: Opponent (team B).
+      - name: venue_a
+        description: home, away, or neutral from team A's perspective.
+      - name: home_indicator
+        description: +1 if team A is at home, −1 if team B is at home, 0 if neutral.
+      - name: label_a_wins
+        description: 1 if team A won, else 0.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: margin_a
+        description: Team A points minus team B points.
+      - name: a_adj_net
+        description: Team A's pre_ncaa adj_net (reference, not a difference).
+      - name: b_adj_net
+        description: Team B's pre_ncaa adj_net (reference, not a difference).
+      - name: d_adj_oe
+        description: Team A adj_oe minus team B adj_oe (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_adj_de
+        description: Team A adj_de minus team B adj_de (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_adj_net
+        description: Team A adj_net minus team B adj_net (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_tempo
+        description: Team A tempo minus team B tempo (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_efg_pct
+        description: Team A eFG% minus team B eFG% (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_tov_pct
+        description: Team A TOV% minus team B TOV% (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_orb_pct
+        description: Team A ORB% minus team B ORB% (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_ftr
+        description: Team A FTR minus team B FTR (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_opp_efg_pct
+        description: Team A opp eFG% minus team B opp eFG% (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_opp_tov_pct
+        description: Team A opp TOV% minus team B opp TOV% (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_drb_pct
+        description: Team A DRB% minus team B DRB% (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_opp_ftr
+        description: Team A opp FTR minus team B opp FTR (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_three_par
+        description: Team A 3PA rate minus team B 3PA rate (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_sos_adj_net
+        description: Team A SOS minus team B SOS (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_last10_net
+        description: Team A last-10 net minus team B last-10 net (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_program_win_pct_5y
+        description: Team A 5-year program win% minus team B (pre_ncaa).
+        data_tests: [not_null]
+      - name: d_win_pct
+        description: Team A win% minus team B win% (pre_ncaa).
+        data_tests: [not_null]
