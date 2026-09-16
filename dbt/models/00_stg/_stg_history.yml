@@ -1,0 +1,216 @@
+version: 2
+
+models:
+  - name: stg_player_games
+    description: >
+      One row per player per game (888,844), 2013-14 to 2017-18, every source row kept, including
+      players who did not play. Game labels (season, postseason_kind, is_closed) come from stg_games.
+      class is populated only for 2017-18; filter on played and is_closed before aggregating minutes or points.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [game_id, player_id]}}
+      - row_count_between: {arguments: {min_count: 888844, max_count: 888844}}
+    columns:
+      - name: game_id
+        description: Sportradar game id; joins to stg_games.
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: "ref('stg_games')", field: game_id}}
+      - name: season
+        description: Season start year (2017 means the 2017-18 season), from stg_games.
+      - name: season_label
+        description: Season as text, e.g. 2017-18, from stg_games.
+      - name: scheduled_date
+        description: Date the game was scheduled, from stg_games.
+      - name: postseason_kind
+        description: Game type from stg_games (REG, CONF, NCAA, NIT, CBI, CIT, OTHER).
+      - name: is_closed
+        description: TRUE when the game is final (stg_games status = closed).
+      - name: team_id
+        description: Sportradar id of the player's team in this game.
+      - name: player_id
+        description: Sportradar player id.
+        data_tests: [not_null]
+      - name: full_name
+        description: Player's full name.
+      - name: class
+        description: >
+          Academic class (FR, SO, JR, SR, GR). Populated only for 2017-18; blank source strings are NULL.
+          It is the class the source records for that season, not a per-game value.
+        data_tests:
+          - accepted_values: {arguments: {values: ['FR', 'SO', 'JR', 'SR', 'GR']}}
+      - name: class_rank
+        description: Class as a number (FR 1, SO 2, JR 3, SR 4, GR 5); NULL when class is missing.
+      - name: height_in
+        description: Player height in inches (source height).
+      - name: weight_lb
+        description: Player weight in pounds (source weight).
+      - name: position
+        description: Listed position, e.g. G, F, C.
+      - name: primary_position
+        description: Primary position, e.g. PG, SG, SF, PF, C.
+      - name: is_starter
+        description: TRUE when the player started the game (source starter).
+      - name: played
+        description: TRUE when the player appeared in the game. Never NULL.
+      - name: minutes
+        description: Minutes played, as an integer (source minutes_int64).
+        data_tests:
+          - accepted_range: {arguments: {min_value: 0, max_value: 60}}
+      - name: points
+        description: Points scored.
+      - name: reb
+        description: Total rebounds (source rebounds).
+      - name: ast
+        description: Assists.
+      - name: tov
+        description: Turnovers.
+      - name: stl
+        description: Steals.
+      - name: blk
+        description: Blocks.
+      - name: pf
+        description: Personal fouls.
+      - name: fgm
+        description: Field goals made.
+      - name: fga
+        description: Field goals attempted.
+      - name: tpm
+        description: Three-pointers made.
+      - name: tpa
+        description: Three-pointers attempted.
+      - name: ftm
+        description: Free throws made.
+      - name: fta
+        description: Free throws attempted.
+
+  - name: stg_tournament_results
+    description: >
+      One row per historical NCAA tournament game (2,117), March 1985 to March 2017. The source season is
+      the tournament (end) year; here season is the start year (source season - 1) so it joins to the
+      Sportradar tables, and tournament_year keeps the March the games were played. Seeds are numbers;
+      region codes (W, X, Y, Z) are not region names, so never join seeds by region.
+    data_tests:
+      - row_count_between: {arguments: {min_count: 2117, max_count: 2117}}
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, win_team_id, lose_team_id]}}
+      - expression_is_true: {arguments: {expression: "season = tournament_year - 1"}}
+      - expression_is_true: {arguments: {expression: "win_team_id != lose_team_id"}}
+      - row_count_between:
+          arguments: {min_count: 1, max_count: 1, group_by: [tournament_year]}
+          config: {where: "ncaa_round = 'FINAL'"}
+    columns:
+      - name: season
+        description: Season start year (2016 means 2016-17, whose tournament was played in March 2017).
+        data_tests: [not_null]
+      - name: season_label
+        description: Season as text, e.g. 2016-17.
+      - name: tournament_year
+        description: Year (March) the tournament was played; the source season column.
+        data_tests: [not_null]
+      - name: ncaa_round
+        description: Round (FF, R64, R32, S16, E8, F4, FINAL). FF is source round 68, the play-in games.
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: ['FF', 'R64', 'R32', 'S16', 'E8', 'F4', 'FINAL']}}
+      - name: ncaa_round_order
+        description: Round as a number, FF 0 through FINAL 6.
+      - name: game_date
+        description: Date the game was played.
+      - name: win_team_id
+        description: Sportradar id of the winning team.
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: "ref('stg_teams')", field: team_id}}
+      - name: lose_team_id
+        description: Sportradar id of the losing team.
+        data_tests:
+          - not_null
+          - relationships: {arguments: {to: "ref('stg_teams')", field: team_id}}
+      - name: win_seed
+        description: Tournament seed of the winning team (1-16).
+        data_tests:
+          - not_null
+          - accepted_range: {arguments: {min_value: 1, max_value: 16}}
+      - name: lose_seed
+        description: Tournament seed of the losing team (1-16).
+        data_tests: [not_null]
+      - name: win_region_code
+        description: Bracket region code of the winning team (W, X, Y or Z). A code, not a region name.
+      - name: lose_region_code
+        description: Bracket region code of the losing team (W, X, Y or Z). A code, not a region name.
+      - name: win_pts
+        description: Points scored by the winning team.
+      - name: lose_pts
+        description: Points scored by the losing team.
+      - name: num_ot
+        description: Number of overtime periods.
+      - name: is_upset
+        description: TRUE when the winner had a worse (numerically higher) seed than the loser.
+
+  - name: stg_tournament_teams
+    description: >
+      One row per team per historical NCAA tournament (1985-2017): 64 teams through 2000, 65 from 2001 to
+      2010 and 68 from 2011. Seed, region code, play-in appearance, wins, last round and champion flag,
+      derived from stg_tournament_results. Attach seeds by (season, team_id), never by region.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, team_id]}}
+      - row_count_between: {arguments: {min_count: 64, max_count: 68, group_by: [season]}}
+      - row_count_between:
+          arguments: {min_count: 1, max_count: 1, group_by: [season]}
+          config: {where: "is_champion"}
+    columns:
+      - name: season
+        description: Season start year (2016 means 2016-17, whose tournament was played in March 2017).
+      - name: season_label
+        description: Season as text, e.g. 2016-17.
+      - name: tournament_year
+        description: Year (March) the tournament was played.
+      - name: team_id
+        description: Sportradar team id.
+        data_tests: [not_null]
+      - name: seed
+        description: Tournament seed (1-16).
+        data_tests: [not_null]
+      - name: region_code
+        description: Bracket region code (W, X, Y or Z). A code, not a region name.
+      - name: played_play_in
+        description: TRUE when the team appeared in a play-in game (source round 68, ncaa_round FF).
+      - name: tournament_wins
+        description: Tournament wins excluding play-in games (0-6; the champion has 6).
+        data_tests:
+          - accepted_range: {arguments: {min_value: 0, max_value: 6}}
+      - name: last_round
+        description: ncaa_round of the team's last game in the tournament (FINAL for both finalists).
+      - name: is_champion
+        description: TRUE when the team won the FINAL.
+
+  - name: stg_team_season_history
+    description: >
+      One row per team per season from the historical season records, keeping the source rows that have
+      a team_id (44,536 of 54,884). season is the start year, as in Sportradar, and the table ends with
+      2016-17. Use it for long-run program strength; wins and losses are season totals.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, team_id]}}
+    columns:
+      - name: season
+        description: Season start year (2016 means 2016-17).
+      - name: season_label
+        description: Season as text, e.g. 2016-17.
+      - name: team_id
+        description: Sportradar team id.
+        data_tests: [not_null]
+      - name: market
+        description: Long official school name for that season.
+      - name: wins
+        description: Games won in the season.
+      - name: losses
+        description: Games lost in the season.
+      - name: ties
+        description: Games tied in the season (early seasons only).
+      - name: win_pct
+        description: wins / (wins + losses), ties excluded; NULL when the team has no wins or losses.
+        data_tests:
+          - accepted_range: {arguments: {min_value: 0, max_value: 1}}
+      - name: division
+        description: NCAA division the team played in that season (1, 2 or 3).
+      - name: current_division
+        description: Division the team plays in now (source current_division).
