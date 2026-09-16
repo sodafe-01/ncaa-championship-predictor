@@ -4,9 +4,10 @@ models:
   - name: f_team_season
     description: >
       Report card: one row per season × scope × D1 team.
-      Scopes are pre_ncaa (games before that season's first NCAA tournament game)
-      and full (every closed game). Grain and names are frozen in DE-02.
-      adj_net is the team-strength rating after venue and opponent adjustment.
+      Scopes are pre_ncaa (closed games with a result before that season's
+      first NCAA tournament game) and full (every closed game with a result).
+      Grain and names are frozen in DE-02. Efficiency, returning-roster and
+      ranks are filled by DE-06 and DE-07.
     data_tests:
       - unique_combination_of_columns:
           arguments:
@@ -19,14 +20,6 @@ models:
       - expression_is_true:
           arguments:
             expression: "wins + losses = games"
-      - expression_is_true:
-          arguments:
-            expression: "experience_index IS NULL"
-            where: "season < 2017"
-      - expression_is_true:
-          arguments:
-            expression: "experience_index IS NOT NULL"
-            where: "season = 2017"
     columns:
       - name: season
         description: Season start year (2017 = 2017-18).
@@ -47,9 +40,11 @@ models:
       - name: alias
         description: Short team code, e.g. VILL.
       - name: conf_alias
-        description: Most common conf_alias on the team's games in this season and scope.
+        description: >
+          Most common per-game conf_alias for the team in this season and
+          scope. Best available source signal, not audited historical membership.
       - name: games
-        description: Closed games in scope, any opponent.
+        description: Closed games with a result (win IS NOT NULL) in scope, any opponent.
       - name: wins
         description: Closed wins in scope.
       - name: losses
@@ -62,192 +57,82 @@ models:
                 min_value: 0
                 max_value: 1
       - name: d1_games
-        description: Valid D1-vs-D1 games used for efficiency.
+        description: Valid D1-vs-D1 games used for efficiency (DE-07).
       - name: tempo
-        description: Average game_poss in valid efficiency games.
-        data_tests:
-          - not_null
-          - accepted_range:
-              arguments:
-                min_value: 55
-                max_value: 85
+        description: Possessions per game (DE-07).
       - name: raw_oe
-        description: 100 * SUM(points) / SUM(game_poss) on valid games.
+        description: Points scored per 100 possessions (DE-07).
       - name: raw_de
-        description: 100 * SUM(opp_points) / SUM(game_poss) on valid games.
+        description: Points allowed per 100 possessions (DE-07).
       - name: raw_net
-        description: raw_oe − raw_de.
+        description: raw_oe − raw_de (DE-07).
       - name: adj_oe
-        description: raw_oe adjusted for opponent defense and venue.
-        data_tests:
-          - not_null
-          - accepted_range:
-              arguments:
-                min_value: 70
-                max_value: 140
+        description: raw_oe adjusted for opponent defense and venue (DE-07).
       - name: adj_de
-        description: raw_de adjusted for opponent offense and venue.
-        data_tests:
-          - not_null
-          - accepted_range:
-              arguments:
-                min_value: 70
-                max_value: 140
+        description: raw_de adjusted for opponent offense and venue (DE-07).
       - name: adj_net
-        description: adj_oe − adj_de; main strength rating.
-        data_tests: [not_null]
+        description: adj_oe − adj_de; main strength rating (DE-07).
       - name: sos_adj_net
-        description: Average opponent adj_net over the team's valid games.
-        data_tests: [not_null]
+        description: Average opponent adj_net (DE-07).
+      - name: conference_strength
+        description: >
+          Mean adj_net for all teams with the same season, scope and
+          conf_alias (DE-07).
       - name: efg_pct
-        description: (SUM(FGM) + 0.5 × SUM(3PM)) / SUM(FGA).
-        data_tests:
-          - not_null
-          - accepted_range:
-              arguments:
-                min_value: 0.35
-                max_value: 0.65
+        description: (FGM + 0.5 × 3PM) / FGA (DE-07).
       - name: tov_pct
-        description: SUM(turnovers) / SUM(game_poss).
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0.08
-                max_value: 0.30
+        description: Turnovers per possession (DE-07).
       - name: orb_pct
-        description: SUM(ORB) / (SUM(ORB) + SUM(opponent DRB)).
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0.12
-                max_value: 0.50
+        description: ORB / (ORB + opponent DRB) (DE-07).
       - name: ftr
-        description: SUM(FTA) / SUM(FGA).
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0.15
-                max_value: 0.65
+        description: FTA / FGA (DE-07).
       - name: opp_efg_pct
-        description: Opponents' eFG% from season sums.
+        description: Opponents' efg_pct (DE-07).
       - name: opp_tov_pct
-        description: Opponents' turnovers / SUM(game_poss).
+        description: Opponents' turnovers per possession (DE-07).
       - name: drb_pct
-        description: SUM(DRB) / (SUM(DRB) + SUM(opponent ORB)).
+        description: DRB / (DRB + opponent ORB) (DE-07).
       - name: opp_ftr
-        description: Opponents' FTA / FGA from season sums.
+        description: Opponents' FTA / FGA (DE-07).
       - name: three_par
-        description: SUM(3PA) / SUM(FGA).
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0.15
-                max_value: 0.65
+        description: 3PA / FGA (DE-07).
       - name: three_pct
-        description: SUM(3PM) / SUM(3PA).
+        description: 3PM / 3PA (DE-07).
       - name: ft_pct
-        description: SUM(FTM) / SUM(FTA).
+        description: FTM / FTA (DE-07).
       - name: last10_net
-        description: Raw net efficiency over the last 10 D1 games in scope.
+        description: Raw net efficiency over the last 10 D1 games in scope (DE-07).
       - name: ap_rank_last
-        description: AP rank at the team's last closed game in scope; NULL = unranked.
+        description: AP rank at the team's last game in scope; NULL = unranked (DE-07).
       - name: experience_index
-        description: Minutes-weighted class (FR=1 … GR=5); 2017-18 only.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 1
-                max_value: 5
+        description: Minutes-weighted class (FR=1 … GR=5); 2017-18 only (DE-07).
       - name: ret_min_share
-        description: Share of minutes expected back next season (from f_roster_continuity).
-        data_tests:
-          - not_null
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: Share of minutes expected back next season (DE-06 → DE-07).
       - name: ret_pts_share
-        description: Share of points expected back next season (from f_roster_continuity).
+        description: Share of points expected back next season (DE-06 → DE-07).
       - name: ret_basis
-        description: actual (2014-15 to 2016-17) or class_proxy (2017-18).
+        description: actual (2014-15 to 2016-17) or class_proxy (2017-18) (DE-06 → DE-07).
       - name: program_win_pct_5y
-        description: Win percent over the previous five seasons (s−5 to s−1).
-        data_tests:
-          - not_null
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: Win percent over the previous five seasons (DE-07).
       - name: rank_adj_net
-        description: 1 = best adj_net in season × scope.
-        data_tests: [not_null]
+        description: 1 = best adj_net in season × scope (DE-07).
       - name: pctl_adj_oe
-        description: 0–1, 1 = best offense.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = best offense (DE-07).
       - name: pctl_adj_de
-        description: 0–1, 1 = best defense / lowest adj_de.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = best defense / lowest adj_de (DE-07).
       - name: pctl_adj_net
-        description: 0–1, 1 = best net.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = best net (DE-07).
       - name: pctl_tempo
-        description: 0–1, 1 = fastest.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = fastest (DE-07).
       - name: pctl_efg_pct
-        description: 0–1, 1 = best eFG%.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = best eFG% (DE-07).
       - name: pctl_tov_pct
-        description: 0–1, 1 = fewest turnovers.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = fewest turnovers (DE-07).
       - name: pctl_orb_pct
-        description: 0–1, 1 = best ORB%.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = best ORB% (DE-07).
       - name: pctl_ftr
-        description: 0–1, 1 = most free-throw attempts.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = most free-throw attempts (DE-07).
       - name: pctl_three_par
-        description: 0–1, 1 = most three-point heavy.
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = most three-point heavy (DE-07).
       - name: pctl_opp_efg_pct
-        description: 0–1, 1 = best defense (lowest opponent eFG).
-        data_tests:
-          - accepted_range:
-              arguments:
-                min_value: 0
-                max_value: 1
+        description: 0–1, 1 = best defense (lowest opponent eFG) (DE-07).

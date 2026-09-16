@@ -1,5 +1,8 @@
 {{
-  config(materialized="table")
+  config(
+    materialized="table",
+    enabled=false
+  )
 }}
 
 WITH d1_teams AS (

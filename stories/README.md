@@ -10,7 +10,7 @@ Paths in the stories are relative to `dbt/`: `models/00_stg/` means `dbt/models/
 |---|---|---|---|---|---|---|
 | 0 | [DE-00](DE-00-scaffold.md) | dbt scaffold, sources, shared macros and tests | Integrator | — | everything | done |
 | 1 | [DE-01](DE-01-core-staging.md) | Core staging: `stg_teams`, `stg_games`, `stg_team_games` | DE1 | DE-00 | every story | done |
-| 2 | [DE-02](DE-02-report-card-contract.md) | Report-card contract: `f_team_season` columns + skeleton | DE2 | DE-01 | ML1, ML2, AE | in-progress |
+| 2 | [DE-02](DE-02-report-card-contract.md) | Report-card contract: `f_team_season` columns + skeleton | DE2 | DE-01 | ML1, ML2, AE | done |
 | 3 | [DE-03](DE-03-history-staging.md) | More staging: player games, tournament history, season history | DE1 | DE-01 | DE-04, DE-06, DE-07, DE-08, DE-10 | todo |
 | 4 | [DE-04](DE-04-dq-gate.md) | Data-quality gate from the Knowledge Catalog scans | DE1 | DE-01, DE-03 | DE-07 | todo |
 | 5 | [DE-05](DE-05-game-efficiency.md) | Per-game efficiency: `f_team_game_efficiency` | DE2 | DE-01 | DE-07 | in-progress |
@@ -21,7 +21,7 @@ Paths in the stories are relative to `dbt/`: `models/00_stg/` means `dbt/models/
 | 10 | [DE-10](DE-10-marts-v1.md) | Marts v1: team profile, conference, league | DE2 | DE-03, DE-07 | AE dashboard, Captain's agent | todo |
 | 11 | [DE-11](DE-11-marts-v2.md) | Marts v2: title odds, backtests, scouting, agent Q&A | DE2 | DE-10 + ML1 T6–T7, ML2 T8–T10, AE T11–T13 | dashboard, agent, pitch | todo |
 
-Status values: `todo` · `in-progress` · `blocked (reason)` · `done`. The `f_team_season` column names in `models/02_features/_f_team_season.yml` are the contract; **frozen after** `dbt build --select f_team_season` passes (needs DE-01).
+Status values: `todo` · `in-progress` · `blocked (reason)` · `done`. The `f_team_season` column names in `models/02_features/_f_team_season.yml` are the contract; **frozen**.
 
 ## Coverage priority
 
