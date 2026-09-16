@@ -75,7 +75,7 @@ Ratings come from the `pre_ncaa` scope (what was known before the tournament); t
 | season, season_label | | |
 | teams | INT64 | 351 |
 | avg_tempo, avg_efg_pct, avg_three_point_rate, avg_three_point_pct, avg_ft_rate, avg_turnover_pct | FLOAT64 | league averages, pre_ncaa scope |
-| home_win_pct | FLOAT64 | home-team win share in non-neutral regular-season D1 games |
+| home_win_pct | FLOAT64 | home-team win share in closed, decided, non-neutral regular-season D1 games (uses DE-01's best-effort `is_neutral`) |
 | home_margin | FLOAT64 | average home margin in those games |
 | parity_sd_adj_margin | FLOAT64 | standard deviation of `adj_margin` (lower = more parity) |
 | top10_gap | FLOAT64 | average `adj_margin` of the top 10 minus the median team's |
@@ -97,7 +97,9 @@ models:
     data_tests:
       - unique_combination_of_columns: {arguments: {combination_of_columns: [season, team_id]}}
       - row_count_between: {arguments: {min_count: 351, max_count: 351, group_by: [season]}}
-      - row_count_between: {arguments: {min_count: 1, max_count: 1, group_by: [season], where: "is_champion"}}
+      - row_count_between:
+          arguments: {min_count: 1, max_count: 1, group_by: [season]}
+          config: {where: "is_champion"}
       - expression_is_true: {arguments: {expression: "ncaa_seed IS NULL", where: "season = 2017"}}
     columns:
       - name: team_name

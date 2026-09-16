@@ -20,6 +20,7 @@
 
 - `scripts/dbt.sh debug`: connection OK.
 - Source key tests: 6/6 PASS (`game_id`, (`game_id`,`team_id`), (`game_id`,`player_id`), team `id`).
+- Possessions: this repo's `possessions` macro is `FGA - ORB + TOV + 0.44 * FTA`. The planning docs said 0.475, and no `possessions_formula` test exists; see Open decisions in `README.md`.
 - `ncaa_round` + `postseason_kind` on the raw games: FF 4, R64 32, R32 16, S16 8, E8 4, F4 2, FINAL 1 for every season 2013–2017.
 - `postseason_kind` counts: REG 27,645 · CONF 1,448 · NCAA 335 · NIT 155 · CIT 131 · CBI 84 · OTHER 7.
 

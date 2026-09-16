@@ -21,9 +21,9 @@ Fill every column of the frozen DE-02 contract with real numbers. `adj_net` beco
 
 1. **Seasons:** only seasons where `dq_season_gate.model_ready` (2014–2017).
 2. **Rows per scope:** `pre_ncaa` uses `in_pre_ncaa_scope`; `full` uses every row. Efficiency columns use only `is_valid_efficiency_row`.
-3. **Record columns** (`games` … `win_pct`): keep the DE-02 logic (all closed games, any opponent).
+3. **Record columns** (`games` … `win_pct`): keep the DE-02 logic (closed games with a result, any opponent).
 4. **Raw efficiency and tempo:** `raw_oe = 100 * SUM(points) / SUM(game_poss)`, `raw_de` likewise, `raw_net = raw_oe - raw_de`, `tempo = AVG(game_poss)`, `d1_games = COUNT(*)`.
-5. **Venue adjustment:** per season × scope, `hca = SQRT(AVG(oe | home) / AVG(oe | away)) - 1` over non-neutral rows (expect roughly 0.015–0.02). Neutralize each row: home `oe_n = oe / (1 + hca)`, `de_n = de * (1 + hca)`; away `oe_n = oe * (1 + hca)`, `de_n = de / (1 + hca)`; neutral unchanged.
+5. **Venue adjustment:** per season × scope, `hca = SQRT(AVG(oe | home) / AVG(oe | away)) - 1` over non-neutral rows (expect roughly 0.015–0.02). Neutralize each row: home `oe_n = oe / (1 + hca)`, `de_n = de * (1 + hca)`; away `oe_n = oe * (1 + hca)`, `de_n = de / (1 + hca)`; neutral unchanged. `is_neutral` is best-effort (DE-01): 2.6% of regular-season games are flagged neutral and some neutral-site events count as home or away, which can pull `hca` slightly low. Report it.
 6. **Opponent adjustment, 10 passes with a Jinja loop:** `lg` = league average `oe` for the season × scope. Start with `adj_oe_0 = AVG(oe_n)` and `adj_de_0 = AVG(de_n)` per team. On pass k, for each row: `g_oe = oe_n * lg / opp_adj_de_(k-1)` and `g_de = de_n * lg / opp_adj_oe_(k-1)`. The team's `adj_oe_k` is the `game_poss`-weighted average of `g_oe` (same for `adj_de_k`). Then rescale so the team averages of both equal `lg`. Generate the CTEs with `{% for k in range(1, 11) %}`.
 7. `adj_net = adj_oe - adj_de`; `sos_adj_net` = average of the opponents' final `adj_net` over the team's rows.
 8. **`conference_strength`:** after final `adj_net`, calculate `AVG(adj_net) OVER (PARTITION BY season, scope, conf_alias)`. Include every team in the conference so every member receives the same conference-season-scope value. DE2 owns this calculation; ML2 consumes it for the forward projection.

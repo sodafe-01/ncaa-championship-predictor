@@ -65,6 +65,7 @@ models:
           - accepted_range: {arguments: {min_value: 0, max_value: 1}}
       - name: ret_basis
         data_tests:
+          - not_null
           - accepted_values: {arguments: {values: ['actual', 'class_proxy']}}
 ```
 

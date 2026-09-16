@@ -33,7 +33,7 @@ Columns in this exact order. The skeleton casts NULL for every column filled by 
 | market | STRING | school name | DE-02 |
 | alias | STRING | short code | DE-02 |
 | conf_alias | STRING | most common per-game `conf_alias` for the team-season; best available, not audited historical membership | DE-02 |
-| games | INT64 | closed games in scope, any opponent | DE-02 |
+| games | INT64 | closed games with a result (`win IS NOT NULL`) in scope, any opponent | DE-02 |
 | wins | INT64 | | DE-02 |
 | losses | INT64 | | DE-02 |
 | win_pct | FLOAT64 | wins / games | DE-02 |
@@ -81,7 +81,7 @@ Columns in this exact order. The skeleton casts NULL for every column filled by 
 
 - First NCAA game per season is `MIN(scheduled_date) WHERE postseason_kind = 'NCAA'` in `stg_games`: 2014-03-18, 2015-03-17, 2016-03-15, 2017-03-14, 2018-03-13. Conference tournaments always end before it.
 - D1 teams: `division_alias = 'D1'` on the team's own row (351 every season).
-- Count only `is_closed` games.
+- Count only closed games with a result: `is_closed AND win IS NOT NULL`. One closed 2015-16 game (UTSA vs Central Arkansas) is recorded 0–0 with no result; counting it would break `wins + losses = games` for both teams.
 - `conference_strength` belongs to DE2 and is calculated in DE-07 after final `adj_net`; ML2 consumes this column rather than recomputing conference aggregates.
 - Conference membership is source-provided and may not perfectly reproduce historical realignment. Carry this caveat into YAML descriptions and downstream marts.
 - Skeleton pattern: `CAST(NULL AS FLOAT64) AS tempo`, and so on, in contract order.
