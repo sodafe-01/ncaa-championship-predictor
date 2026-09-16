@@ -1,0 +1,49 @@
+name: ncaa_longhorns
+version: "1.0.0"
+config-version: 2
+profile: ncaa_longhorns
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["data_tests", "tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["docs"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  first_model_season: 2014
+  last_season: 2017
+  forecast_season: 2018
+  sim_seed: 42
+  n_sims: 10000
+
+models:
+  ncaa_longhorns:
+    +persist_docs:
+      relation: true
+      columns: true
+    00_stg:
+      +materialized: view
+      +tags: ["stg", "de1"]
+    01_dq:
+      +materialized: view
+      +tags: ["dq", "de1"]
+    02_features:
+      +materialized: table
+      +tags: ["f", "de2"]
+    03_models:
+      +materialized: table
+      +tags: ["m", "ml1"]
+    04_sim:
+      +materialized: table
+      +tags: ["sim", "ml2"]
+    05_ai:
+      +materialized: table
+      +tags: ["ai", "ae"]
+    06_marts:
+      +materialized: table
+      +tags: ["mart", "de2"]
