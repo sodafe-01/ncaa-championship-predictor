@@ -44,3 +44,14 @@ PROJECT=da-hackathon-2026 DATASET=texas_longhorns \
 Auth uses `google-github-actions/auth` with a service-account key stored in the
 `GCP_SA_KEY` repo secret. Project/dataset come from repo **variables**
 `GCP_PROJECT_ID` and `BQ_DATASET`.
+
+### Slack notifications
+
+Deploy/validation results post to Slack channel `#C0C2D1ZSR5G`
+(66degrees workspace). Requires:
+
+- Repo secret `SLACK_BOT_TOKEN` — a Slack bot token (`xoxb-…`) with the
+  `chat:write` scope.
+- The Slack app must be invited to the channel: `/invite @your-app`.
+
+Channel ID is set via the `SLACK_CHANNEL_ID` env in the workflow.

@@ -15,6 +15,7 @@ env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   BQ_DATASET: ${{ vars.BQ_DATASET }}
   BQ_LOCATION: US
+  SLACK_CHANNEL_ID: C0C2D1ZSR5G
 
 jobs:
   validate:
@@ -46,6 +47,16 @@ jobs:
           bq --project_id="${GCP_PROJECT_ID}" rm -r -f -d \
             "${GCP_PROJECT_ID}:ci_pr_${{ github.run_id }}" || true
 
+      - name: Notify Slack (PR validation failed)
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ env.SLACK_CHANNEL_ID }}
+            text: ":warning: *BigQuery SQL validation failed* on PR — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|view run> (${{ github.actor }})"
+
   deploy:
     name: Deploy to BigQuery
     runs-on: ubuntu-latest
@@ -66,3 +77,23 @@ jobs:
           DATASET: ${{ env.BQ_DATASET }}
           LOCATION: ${{ env.BQ_LOCATION }}
         run: bash bq/deploy.sh
+
+      - name: Notify Slack (success)
+        if: success()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ env.SLACK_CHANNEL_ID }}
+            text: ":white_check_mark: *BigQuery deploy succeeded* to `${{ env.GCP_PROJECT_ID }}.${{ env.BQ_DATASET }}` — <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}> by ${{ github.actor }}"
+
+      - name: Notify Slack (failure)
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ env.SLACK_CHANNEL_ID }}
+            text: ":x: *BigQuery deploy FAILED* on `${{ env.GCP_PROJECT_ID }}.${{ env.BQ_DATASET }}` — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|view run> (${{ github.actor }})"
