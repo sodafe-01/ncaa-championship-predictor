@@ -22,10 +22,11 @@ else
   exit 1
 fi
 
-if [[ -z "${GCP_ACCESS_TOKEN:-}" ]]; then
+TARGET="${DBT_TARGET:-token}"
+if [[ "${TARGET}" == "token" && -z "${GCP_ACCESS_TOKEN:-}" ]]; then
   GCP_ACCESS_TOKEN="$(gcloud auth print-access-token)"
   export GCP_ACCESS_TOKEN
 fi
 
 cd "${DBT_DIR}"
-exec "${DBT_BIN}" "$@" --project-dir "${DBT_DIR}" --profiles-dir "${DBT_PROFILES_DIR}"
+exec "${DBT_BIN}" "$@" --project-dir "${DBT_DIR}" --profiles-dir "${DBT_PROFILES_DIR}" --target "${TARGET}"

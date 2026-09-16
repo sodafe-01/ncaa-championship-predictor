@@ -10,17 +10,25 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`dbt-core` 1.12 is not used here: its parser wheel fails TLS on this machine. 1.11.7 matches a known-good install.
+## Run from the venv
 
-## Run
+`profiles.yml` lives in this folder, not in `~/.dbt`. Set `DBT_PROFILES_DIR` from the **repo root** (not from inside `dbt/`, or the path becomes `dbt/dbt`):
 
-Always go through the token wrapper (plain dbt oauth fails in this project):
+```bash
+source .venv/bin/activate
+export DBT_PROFILES_DIR="$PWD/dbt"
+cd dbt
+dbt debug
+```
+
+Already in `dbt/`? Use `export DBT_PROFILES_DIR="$PWD"` instead.
+
+If ADC oauth fails in this project:
 
 ```bash
 scripts/dbt.sh debug
-scripts/dbt.sh compile
-scripts/dbt.sh build --select tag:de1
-scripts/verify.sh
 ```
+
+That uses the `token` target and sets `GCP_ACCESS_TOKEN` for you.
 
 A bare `scripts/dbt.sh build` uses selector `routine` and skips `tag:ai`.
