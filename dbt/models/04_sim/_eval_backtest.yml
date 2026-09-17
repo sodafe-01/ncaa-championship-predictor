@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: eval_backtest
+    description: >
+      How the win models would have done in each backtest tournament, using only information from before it:
+      log loss, Brier score and accuracy over every tournament game (both orderings), next to a better-seed
+      baseline (the historical rate at which the better seed wins, from tournaments before that season) and a
+      better-record baseline (how often the better pre-tournament record won in that season's training games).
+      Core tournaments are March 2015-2017 (seasons 2014-2016); March 2018 (season 2017) is the extension and has
+      no seed baseline because the data has no 2018 seeds. The champion's rank and title probability come from the
+      simulation, which uses the chosen family, so they are filled only on that family's rows.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, model_name]}}
+      - row_count_between:
+          arguments: {min_count: 3, max_count: 3, group_by: [season]}
+          config: {where: "season BETWEEN 2014 AND 2016"}
+      - expression_is_true: {arguments: {expression: "seed_baseline_logloss IS NULL", where: "season = 2017"}}
+      - expression_is_true: {arguments: {expression: "seed_baseline_logloss IS NOT NULL", where: "is_core_season"}}
+      - expression_is_true: {arguments: {expression: "champion_rank IS NOT NULL", where: "is_chosen_model"}}
+    columns:
+      - name: season
+        description: Backtest season start year (2014 means the March 2015 tournament).
+        data_tests: [not_null]
+      - name: season_label
+        description: Season as text, e.g. 2014-15.
+      - name: is_core_season
+        description: TRUE for the core backtests (seasons 2014-2016).
+      - name: model_name
+        description: Model family (logistic_reg, boosted_tree or rating_only).
+      - name: is_chosen_model
+        description: TRUE for the full-feature family used by the simulation.
+      - name: games_scored
+        description: NCAA tournament games scored (67 per tournament).
+        data_tests: [{accepted_range: {arguments: {min_value: 67, max_value: 67}}}]
+      - name: logloss
+        description: Average log loss of the model's tournament predictions (lower is better).
+        data_tests: [not_null]
+      - name: brier
+        description: Average squared error of the predicted probability (lower is better).
+      - name: accuracy
+        description: Share of tournament predictions on the right side of 50%.
+      - name: seed_baseline_logloss
+        description: Log loss of the better-seed baseline; NULL for 2017-18 (no seeds in the data).
+      - name: record_baseline_logloss
+        description: Log loss of the better-record baseline.
+      - name: beats_seed_baseline
+        description: TRUE when the model's log loss is below the seed baseline's.
+      - name: beats_record_baseline
+        description: TRUE when the model's log loss is below the record baseline's.
+      - name: champion_team_id
+        description: The tournament's real champion.
+      - name: champion_rank
+        description: Where the real champion ranked in the simulated title odds before the tournament (1 = favorite); chosen family only.
+      - name: champion_p_champ
+        description: The real champion's simulated title probability before the tournament; chosen family only.
