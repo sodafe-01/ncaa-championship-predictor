@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: sim_games
+    description: >
+      Every simulated NCAA tournament game: each scenario's 67-slot bracket (the real bracket for backtest
+      seasons 2014-2017, the projected bracket for proj_2018) played var('n_sims') times, one round at a time,
+      with win probabilities from p_matchup. Randomness is seeded with FARM_FINGERPRINT over the sim seed,
+      scenario, run and slot, so rebuilding gives identical results.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, sim, slot_id]}}
+      - expression_is_true: {arguments: {expression: "winner_team_id IN (team_a_id, team_b_id)"}}
+    columns:
+      - name: scenario
+        description: backtest_<season> or proj_2018.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament.
+      - name: sim
+        description: Simulation run number (1 to n_sims).
+      - name: slot_id
+        description: Bracket slot played.
+      - name: ncaa_round_order
+        description: Round as a number, First Four 0 through final 6.
+      - name: team_a_id
+        description: Team on side a in this run.
+        data_tests: [not_null]
+      - name: team_b_id
+        description: Team on side b in this run.
+        data_tests: [not_null]
+      - name: winner_team_id
+        description: Simulated winner.
+        data_tests: [not_null]
+
+  - name: sim_results
+    description: >
+      Simulated title odds: for each scenario's 68 tournament teams, the share of simulated tournaments in which
+      the team reaches each round and wins the title. Backtest scenarios replay real brackets with pre-tournament
+      information only; proj_2018 plays the projected 2018-19 bracket.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, team_id]}}
+      - row_count_between: {arguments: {min_count: 68, max_count: 68, group_by: [scenario]}}
+    columns:
+      - name: scenario
+        description: backtest_<season> or proj_2018.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament.
+      - name: team_id
+        description: Tournament team.
+        data_tests: [not_null]
+      - name: region
+        description: Region of the team's first bracket slot.
+      - name: seed
+        description: Seed (real for 2014-2016, projected for proj_2018, NULL for the 2017-18 backtest).
+      - name: p_r64
+        description: Probability of playing in the round of 64 (1 unless the team starts in the First Four).
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_r32
+        description: Probability of reaching the round of 32.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_s16
+        description: Probability of reaching the Sweet 16.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_e8
+        description: Probability of reaching the Elite Eight.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_f4
+        description: Probability of reaching the Final Four.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_final
+        description: Probability of reaching the championship game.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_champ
+        description: Probability of winning the national championship.
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: n_sims
+        description: Number of simulated tournaments behind the probabilities.
+
+  - name: sim_paths
+    description: >
+      Each tournament team's most likely path: for every bracket slot the team can reach, how often it gets there,
+      how often it wins that game and its most likely opponent there.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, team_id, slot_id]}}
+    columns:
+      - name: scenario
+        description: backtest_<season> or proj_2018.
+      - name: season
+        description: Season start year of the tournament.
+      - name: team_id
+        description: Tournament team.
+      - name: slot_id
+        description: Bracket slot the team plays in when it gets that far.
+      - name: ncaa_round_order
+        description: Round as a number, First Four 0 through final 6.
+      - name: p_reach
+        description: Probability the team plays in this slot.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_win
+        description: Probability the team plays and wins this slot's game.
+      - name: likely_opponent_id
+        description: Opponent the team meets most often in this slot.
+      - name: p_likely_opponent
+        description: Probability of meeting that opponent in this slot.
