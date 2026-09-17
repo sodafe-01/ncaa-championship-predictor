@@ -6,6 +6,21 @@
 
 Blocked until the upstream tables exist. Before writing SQL, read the upstream models' YAML for their real column names. If they differ from this proposal, agree the names with the owner instead of guessing.
 
+## As built (2026-09-16)
+
+The upstream lanes were built in the same pass, so their names were set together with these marts: ML1 `m_game_win*`, `p_matchup`, `m_explain_topk`; ML2 `m_next_season_eval`, `f_team_projection`, `projected_field`, `projected_bracket`, `sim_games`, `sim_results`, `sim_paths`, `eval_backtest`; AE `ai_team_scouting`; Captain `agent/examples.md` (this repo keeps agent files in `agent/`, not `agents/`). All four marts build and every listed test passes, including `mart_title_odds_sum_to_one`, `mart_backtest_core_coverage` and `marts_have_column_descriptions` (now depending on the DE-11 marts too, so it runs after they persist their descriptions). Differences from the proposal:
+
+1. **Scenarios** use the season start year: `backtest_2014` … `backtest_2017` (the March 2015-2018 tournaments) and `proj_2018` (2018-19).
+2. **`mart_title_odds`** adds `is_forecast`, `adj_margin_low` and `adj_margin_high` (the forecast's ~80% band). For the forecast, `adj_margin` and `strength_rank` are the projected rating and rank rather than `mart_team_profile` values, which don't exist for 2018-19.
+3. **`mart_backtest`** covers three model families per season (`logistic_reg`, the chosen family; `boosted_tree`; `rating_only`, the forecast family) and adds `is_core_season` and `is_chosen_model`. The champion's odds rank is filled on the chosen family only, because the simulations use it. March 2018 is included, with a NULL seed baseline.
+4. **`mart_team_scouting`** `top_drivers` comes from the team-profile rows of `m_explain_topk` (the team against an average tournament team); for the forecast it describes the 2017-18 profile.
+
+Report back:
+
+- **Forecast top 10 by `p_champion` (2018-19):** Villanova 0.386, Duke 0.145, Michigan State 0.089, Virginia 0.074, Kentucky 0.043, Kansas 0.033, Tennessee 0.026, Michigan 0.021, Purdue 0.021, North Carolina 0.019. The projection's class-based returning shares can't see early NBA departures or transfers.
+- **Core backtests (chosen logistic model):** log loss 0.504 / 0.553 / 0.514 against a seed baseline of 0.532 / 0.637 / 0.554 and a record baseline of 0.759 / 0.612 / 0.738 for the March 2015 / 2016 / 2017 tournaments. The champion ranked 4th (Duke, 10.3%), 6th (Villanova, 5.2%) and 3rd (North Carolina, 11.7%) in pre-tournament odds.
+- **March 2018 extension (record baseline only):** log loss 0.582 vs a record baseline of 0.712; the champion Villanova ranked 2nd (20.8%).
+
 ## Goal
 
 The presentation-ready tables behind the prediction: title odds per team, the backtest scorecard, AI scouting reports and the rehearsed agent questions, all documented in plain English.

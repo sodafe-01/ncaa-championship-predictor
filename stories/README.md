@@ -19,7 +19,7 @@ Paths in the stories are relative to `dbt/`: `models/00_stg/` means `dbt/models/
 | 8 | [DE-08](DE-08-bracket.md) | Brackets: `stg_bracket` | DE1 | DE-01, DE-03 | ML2 simulation | done |
 | 9 | [DE-09](DE-09-matchups.md) | Matchup rows: `f_matchups` | DE2 | DE-07 | ML1 | done |
 | 10 | [DE-10](DE-10-marts-v1.md) | Marts v1: team profile, conference, league | DE2 | DE-03, DE-07 | AE dashboard, Captain's agent | done |
-| 11 | [DE-11](DE-11-marts-v2.md) | Marts v2: title odds, backtests, scouting, agent Q&A | DE2 | DE-10 + ML1 T6–T7, ML2 T8–T10, AE T11–T13 | dashboard, agent, pitch | blocked (2026-09-16: `sim_results`, `eval_backtest`, `ai_team_scouting`, `m_explain_topk` and `agents/examples.md` don't exist yet) |
+| 11 | [DE-11](DE-11-marts-v2.md) | Marts v2: title odds, backtests, scouting, agent Q&A | DE2 | DE-10 + ML1 T6–T7, ML2 T8–T10, AE T11–T13 | dashboard, agent, pitch | done |
 
 Status values: `todo` · `in-progress` · `blocked (reason)` · `done`. The `f_team_season` column names in `models/02_features/_f_team_season.yml` are the contract; **frozen**.
 
