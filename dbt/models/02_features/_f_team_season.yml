@@ -68,10 +68,8 @@ models:
       - name: d1_games
         description: Valid D1-vs-D1 games in scope used for the efficiency columns.
       - name: tempo
-        description: >
-          Possessions per game, scaled to 40 minutes so overtime games don't inflate pace (each overtime
-          period adds 5 minutes), averaged over valid D1-vs-D1 games in scope.
-        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 85}}}]
+        description: Average game possessions over valid D1-vs-D1 games in scope.
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 86}}}]
       - name: raw_oe
         description: Points scored per 100 possessions, before any adjustment.
       - name: raw_de

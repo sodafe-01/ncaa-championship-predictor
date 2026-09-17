@@ -158,8 +158,6 @@ eff_rows AS (
     e.points,
     e.opp_points,
     e.game_poss,
-    -- pace per 40 minutes: each overtime period adds 5 minutes
-    e.game_poss * 40 / (40 + 5 * GREATEST(COALESCE(g.periods, 2) - 2, 0)) AS game_poss_per_40,
     e.oe,
     e.de,
     e.fgm,
@@ -181,8 +179,6 @@ eff_rows AS (
   FROM {{ ref('f_team_game_efficiency') }} AS e
   INNER JOIN model_seasons AS ms
     ON ms.season = e.season
-  INNER JOIN {{ ref('stg_games') }} AS g
-    ON g.game_id = e.game_id
   CROSS JOIN scopes AS sc
   WHERE e.is_valid_efficiency_row
     AND (sc.scope = 'full' OR e.in_pre_ncaa_scope)
@@ -194,7 +190,7 @@ season_sums AS (
     scope,
     team_id,
     COUNT(*) AS d1_games,
-    AVG(game_poss_per_40) AS tempo,
+    AVG(game_poss) AS tempo,
     100 * SAFE_DIVIDE(SUM(points), SUM(game_poss)) AS raw_oe,
     100 * SAFE_DIVIDE(SUM(opp_points), SUM(game_poss)) AS raw_de,
     SAFE_DIVIDE(SUM(fgm) + 0.5 * SUM(tpm), SUM(fga)) AS efg_pct,
@@ -237,13 +233,13 @@ neutral_rows AS (
     r.game_poss,
     l.lg,
     CASE r.venue_type
-      WHEN 'home' THEN r.oe / (1 + l.hca)
+      WHEN 'home' THEN SAFE_DIVIDE(r.oe, 1 + l.hca)
       WHEN 'away' THEN r.oe * (1 + l.hca)
       ELSE r.oe
     END AS oe_n,
     CASE r.venue_type
       WHEN 'home' THEN r.de * (1 + l.hca)
-      WHEN 'away' THEN r.de / (1 + l.hca)
+      WHEN 'away' THEN SAFE_DIVIDE(r.de, 1 + l.hca)
       ELSE r.de
     END AS de_n
   FROM eff_rows AS r
@@ -271,8 +267,14 @@ adj_{{ k }}_raw AS (
     n.scope,
     n.team_id,
     ANY_VALUE(n.lg) AS lg,
-    SAFE_DIVIDE(SUM(n.game_poss * n.oe_n * n.lg / o.adj_de), SUM(n.game_poss)) AS adj_oe,
-    SAFE_DIVIDE(SUM(n.game_poss * n.de_n * n.lg / o.adj_oe), SUM(n.game_poss)) AS adj_de
+    SAFE_DIVIDE(
+      SUM(SAFE_DIVIDE(n.game_poss * n.oe_n * n.lg, o.adj_de)),
+      SUM(n.game_poss)
+    ) AS adj_oe,
+    SAFE_DIVIDE(
+      SUM(SAFE_DIVIDE(n.game_poss * n.de_n * n.lg, o.adj_oe)),
+      SUM(n.game_poss)
+    ) AS adj_de
   FROM neutral_rows AS n
   INNER JOIN adj_{{ k - 1 }} AS o
     ON o.season = n.season
@@ -287,8 +289,8 @@ adj_{{ k }} AS (
     season,
     scope,
     team_id,
-    adj_oe * lg / AVG(adj_oe) OVER (PARTITION BY season, scope) AS adj_oe,
-    adj_de * lg / AVG(adj_de) OVER (PARTITION BY season, scope) AS adj_de
+    SAFE_DIVIDE(adj_oe * lg, AVG(adj_oe) OVER (PARTITION BY season, scope)) AS adj_oe,
+    SAFE_DIVIDE(adj_de * lg, AVG(adj_de) OVER (PARTITION BY season, scope)) AS adj_de
   FROM adj_{{ k }}_raw
 ),
 

@@ -51,7 +51,7 @@ base AS (
     tg.opp_tov,
     tg.poss,
     tg.opp_poss,
-    (tg.poss + tg.opp_poss) / 2 AS game_poss
+    SAFE_DIVIDE(tg.poss + tg.opp_poss, 2) AS game_poss
   FROM {{ ref('stg_team_games') }} AS tg
   INNER JOIN ncaa_openers AS n
     ON n.season = tg.season
@@ -61,9 +61,6 @@ base AS (
     AND tg.is_d1_matchup
     AND tg.has_box_stats
     AND tg.season BETWEEN {{ var('first_model_season') }} AND {{ var('last_season') }}
-    -- The CIT first round is played the Monday before the First Four: under the strict first-NCAA-date
-    -- cutoff those games would sit in pre_ncaa, which must never hold a national postseason game.
-    AND NOT (tg.postseason_kind IN ('NIT', 'CBI', 'CIT') AND tg.scheduled_date < n.first_ncaa_date)
 )
 
 SELECT

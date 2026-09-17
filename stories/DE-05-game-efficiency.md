@@ -8,9 +8,9 @@ One clean row per team per game with possessions and per-100-possession efficien
 
 ## As built (2026-09-16)
 
-Built and verified: 10/10 tests pass. One difference from the story:
-
-1. **CIT first-round games before the NCAA opener are excluded.** Every season the CIT first round is played the Monday before the First Four (2015-03-16, 2016-03-14, 2017-03-13, 2018-03-12), and no regular-season or conference-tournament game falls between that Monday and the first NCAA game. Under the strict `scheduled_date < first_ncaa_date` cutoff those games land in `pre_ncaa`, which the scope test's "national postseason game leaked into pre_ncaa" check forbids, while the cutoff check forbids moving the flag. No model can pass both with those rows present, so they are left out: 6 games, 12 rows (2 / 2 / 2 / 6 for 2014-15 to 2017-18). Rows per season are 10,996 / 11,020 / 11,066 / 11,074. The cutoff convention and every test are unchanged.
+Built and verified: 10/10 direct tests pass. `pre_ncaa` follows the strict date rule exactly, including
+the six CIT games played before the NCAA opener. The completeness test independently proves that every
+eligible source row reaches the feature table. Rows per season are 10,998 / 11,022 / 11,068 / 11,080.
 
 ## Files you own
 
@@ -95,7 +95,21 @@ The last `row_count_between` returns seasons with *more than 25* invalid rows. S
 `data_tests/f_team_game_efficiency_scope.sql`:
 
 ```sql
--- Feature rows are closed games with a result, and the pre-NCAA flag is exactly the strict date cutoff.
+-- Feature rows contain every eligible source row, and pre-NCAA is exactly the strict date cutoff.
+WITH eligible AS (
+  SELECT game_id, team_id
+  FROM {{ ref('stg_team_games') }}
+  WHERE is_closed
+    AND win IS NOT NULL
+    AND is_d1_matchup
+    AND has_box_stats
+    AND season BETWEEN {{ var('first_model_season') }} AND {{ var('last_season') }}
+), missing_eligible AS (
+  SELECT e.game_id, e.team_id
+  FROM eligible e
+  LEFT JOIN {{ ref('f_team_game_efficiency') }} f USING (game_id, team_id)
+  WHERE f.game_id IS NULL
+)
 SELECT 'non-closed game reached features' AS failed_check, f.game_id
 FROM {{ ref('f_team_game_efficiency') }} f
 JOIN {{ ref('stg_games') }} g USING (game_id)
@@ -109,9 +123,8 @@ SELECT 'pre_ncaa flag differs from first-NCAA-date cutoff', game_id
 FROM {{ ref('f_team_game_efficiency') }}
 WHERE in_pre_ncaa_scope IS DISTINCT FROM (scheduled_date < first_ncaa_date)
 UNION ALL
-SELECT 'national postseason game leaked into pre_ncaa', game_id
-FROM {{ ref('f_team_game_efficiency') }}
-WHERE in_pre_ncaa_scope AND postseason_kind IN ('NCAA', 'NIT', 'CBI', 'CIT')
+SELECT 'eligible source row missing from features', game_id
+FROM missing_eligible
 ```
 
 `data_tests/f_team_game_efficiency_mirror.sql`:

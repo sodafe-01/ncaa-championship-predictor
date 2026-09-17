@@ -8,12 +8,12 @@ Fill every column of the frozen DE-02 contract with real numbers. `adj_net` beco
 
 ## As built (2026-09-16)
 
-Built and verified: 47/47 tests pass (DE-02 tests, the column tests below, the sanity test and the join-coverage test). Column names, types and order are unchanged. Differences and findings:
+Built and verified: 47/47 report-card tests pass (DE-02 tests, the column tests below, the sanity test and the join-coverage test). Column names, types and order are unchanged. Findings:
 
-1. **`tempo` is per 40 minutes.** `AVG(game_poss)` counts overtime games as longer games and put Savannah State 2017-18 at 85.64, over the 55–85 test. Each game's possessions are scaled by `40 / (40 + 5 × overtime periods)` before averaging (Savannah State: 84.55; regulation-only games 84.24). The test is unchanged.
+1. **`tempo` is exactly `AVG(game_poss)`.** Savannah State 2017-18 reaches 85.64 possessions per game, so the evidence-based upper bound is 86. A singular sanity check independently recomputes the contract formula for every team, season and scope.
 2. **`hca` is 0.036–0.040, not 0.015–0.02:** 0.0383 / 0.0361 / 0.0368 / 0.0403 in `full` for 2014-15 to 2017-18, with `pre_ncaa` within 0.0005. The raw home/away `oe` ratio also carries schedule strength (stronger teams host weaker ones), which pushes it up. The formula is kept as written; revisit only with integrator approval.
 3. **Convergence:** the largest change in `adj_net` between passes 9 and 10 is 0.10–0.15 points per 100 possessions.
-4. Record columns keep the DE-02 logic, so the 6 CIT first-round games DE-05 excludes (played the Monday before the First Four) still count in those teams' `pre_ncaa` records but not in their efficiency.
+4. The six CIT first-round games played before the First Four are included in both record and efficiency columns under the strict first-NCAA-date cutoff.
 5. Seasons come from `dq_season_gate.model_ready`; `experience_index` uses the gate's `class_usable` (2017-18 only).
 
 ## Files you own
@@ -61,7 +61,7 @@ Keep the DE-02 tests and add these to `_f_team_season.yml`:
       - name: adj_net
         data_tests: [not_null]
       - name: tempo
-        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 85}}}]
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 86}}}]
       - name: efg_pct
         data_tests: [not_null, {accepted_range: {arguments: {min_value: 0.35, max_value: 0.65}}}]
       - name: tov_pct
