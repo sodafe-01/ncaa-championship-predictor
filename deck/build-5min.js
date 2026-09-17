@@ -10,7 +10,7 @@ const ReactDOMServer = require('react-dom/server');
 const sharp = require('sharp');
 const fa = require('react-icons/fa6');
 
-// Values from da-hackathon-2026.texas_longhorns, pulled 2026-09-16:
+// Values from da-hackathon-2026.texas_longhorns, pulled 2026-09-16, re-verified after the 2026-09-17 mart rebuild:
 //   pick/contenders  mart_title_odds     scenario = 'proj_2018', ORDER BY odds_rank, p_champion
 //   backtest         mart_backtest       is_chosen_model AND is_core_season (logistic_reg; AVG over 3 seasons)
 //   drivers          m_explain_topk      proj_2018, explain_level = 'team_profile', the pick's team_id
@@ -24,7 +24,7 @@ const DATA = {
   contenders: [['Villanova', 38.6], ['Duke', 14.5], ['Michigan State', 8.9], ['Virginia', 7.4], ['Kentucky', 4.3]],
   // average log loss over the 2015-2017 tournaments (67 games each, First Four included); lower is better
   // model = full-feature logistic regression (chosen); forecast = rating-only logistic model used for 2018-19
-  backtest: { games: 201, model: 0.524, forecastModel: 0.526, boostedTree: 0.537, seed: 0.574, record: 0.703, accuracy: 0.716 },
+  backtest: { games: 201, model: 0.524, forecastModel: 0.526, boostedTree: 0.538, seed: 0.574, record: 0.703, accuracy: 0.716 },
   // [season, champion, pre-tournament strength rank among 351 D-I teams]
   champions: [['2014-15', 'Duke', 4], ['2015-16', 'Villanova', 8], ['2016-17', 'UNC', 3], ['2017-18', 'Villanova', 1]],
   // explains the pick's 2017-18 measured profile: [label, attribution (log-odds), value vs. field average]
@@ -544,8 +544,8 @@ async function main() {
     s.background = { color: C.white };
     header(s, 'A2  ·  FORECAST MECHANICS', 'Matchup model → simulation → backtest');
     const cols = [
-      ['FaBrain', 'Predict one game', 'BQML · STATION 3', ['Walk-forward: P(A beats B) on a neutral court; seeds never enter', 'Logistic regression chosen over boosted tree (log loss 0.524 vs 0.537)', 'The 2018-19 forecast uses the ratings-only version (0.526)', 'ML.EXPLAIN_PREDICT gives each team\'s top 3 drivers']],
-      ['FaDice', 'Play it 10,000×', 'PROJECTION + SIMULATION', ['Projected ratings beat carry-forward (RMSE 6.49 vs 7.63)', 'Build a projected field of 68 and its bracket', 'One SQL model: 10,000 brackets × 67 games, seeded', 'Count how often each team wins each round']],
+      ['FaBrain', 'Predict one game', 'BQML · STATION 3', ['Walk-forward: P(A beats B) on a neutral court; seeds never enter', `Logistic regression chosen over boosted tree (log loss ${DATA.backtest.model} vs ${DATA.backtest.boostedTree})`, `The 2018-19 forecast uses the ratings-only version (${DATA.backtest.forecastModel})`, 'ML.EXPLAIN_PREDICT gives each team\'s top 3 drivers']],
+      ['FaDice', 'Play it 10,000×', 'PROJECTION + SIMULATION', [`Projected ratings beat carry-forward (RMSE ${DATA.quality.projRmse} vs ${DATA.quality.carryRmse})`, 'Build a projected field of 68 and its bracket', 'One SQL model: 10,000 brackets × 67 games, seeded', 'Count how often each team wins each round']],
       ['FaChartColumn', 'Prove it works', 'BACKTEST · STATION 4', ['Replay March 2015–2018; train only on earlier games', 'Beat seed + record baselines all 3 core years', 'Seed baseline 2015–2017 only (no 2018 seeds)', 'Boosted tree won 2018, but the choice uses core years only']],
     ];
     for (let i = 0; i < cols.length; i++) {
