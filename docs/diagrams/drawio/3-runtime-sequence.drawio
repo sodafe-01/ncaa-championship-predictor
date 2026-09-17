@@ -1,0 +1,94 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="arch3" name="Runtime Sequence">
+    <mxGraphModel dx="1245" dy="579" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="960" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="hExec" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EE6C4D;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" value="Executive" vertex="1">
+          <mxGeometry height="40" width="150" x="80" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hGem" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" value="Gemini" vertex="1">
+          <mxGeometry height="40" width="150" x="290" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hAgent" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" value="BigQuery Data Agent" vertex="1">
+          <mxGeometry height="40" width="170" x="540" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hBQ" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" value="BigQuery (curated + BQML)" vertex="1">
+          <mxGeometry height="40" width="180" x="770" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="llExec" edge="1" parent="1" style="html=1;endArrow=none;dashed=1;strokeColor=#8DA9C4;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="70" as="sourcePoint" />
+            <mxPoint x="150" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="llGem" edge="1" parent="1" style="html=1;endArrow=none;dashed=1;strokeColor=#8DA9C4;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="365" y="70" as="sourcePoint" />
+            <mxPoint x="365" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="llAgent" edge="1" parent="1" style="html=1;endArrow=none;dashed=1;strokeColor=#8DA9C4;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="625" y="70" as="sourcePoint" />
+            <mxPoint x="625" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="llBQ" edge="1" parent="1" style="html=1;endArrow=none;dashed=1;strokeColor=#8DA9C4;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="70" as="sourcePoint" />
+            <mxPoint x="860" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="html=1;endArrow=block;strokeColor=#EE6C4D;fontColor=#3D5A80;fontSize=10;" value="Who wins the championship, and why?">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="110" as="sourcePoint" />
+            <mxPoint x="365" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="html=1;endArrow=block;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;" value="Decompose into data questions">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="365" y="150" as="sourcePoint" />
+            <mxPoint x="625" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="html=1;endArrow=block;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;" value="NL→SQL over governed model">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="625" y="190" as="sourcePoint" />
+            <mxPoint x="860" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="html=1;endArrow=open;dashed=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;" value="champion probabilities + features">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="230" as="sourcePoint" />
+            <mxPoint x="625" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="html=1;endArrow=block;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;" value="AI.GENERATE scouting narrative">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="625" y="270" as="sourcePoint" />
+            <mxPoint x="860" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="html=1;endArrow=open;dashed=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;" value="grounded strengths / weaknesses">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="310" as="sourcePoint" />
+            <mxPoint x="625" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="html=1;endArrow=open;dashed=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;" value="results &amp; evidence, query-traceable">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="625" y="350" as="sourcePoint" />
+            <mxPoint x="365" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="html=1;endArrow=open;dashed=1;strokeColor=#EE6C4D;fontColor=#3D5A80;fontSize=10;" value="prediction + confidence + reasoning">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="365" y="390" as="sourcePoint" />
+            <mxPoint x="150" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

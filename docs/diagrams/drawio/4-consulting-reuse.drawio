@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="arch4" name="Consulting Reuse Pattern">
+    <mxGraphModel dx="900" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="520" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="gP" value="REUSABLE ACCELERATOR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8DA9C4;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#3D5A80;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="820" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="C1" value="Knowledge Catalog&#10;discovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="70" y="65" width="170" height="55" as="geometry" /></mxCell>
+        <mxCell id="C2" value="Curated semantic layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="280" y="65" width="170" height="55" as="geometry" /></mxCell>
+        <mxCell id="C3" value="BQML predictions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="490" y="65" width="170" height="55" as="geometry" /></mxCell>
+        <mxCell id="C4" value="Data Agent + Gemini" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="690" y="65" width="150" height="55" as="geometry" /></mxCell>
+
+        <mxCell id="p1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;" edge="1" parent="1" source="C1" target="C2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;" edge="1" parent="1" source="C2" target="C3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="p3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;" edge="1" parent="1" source="C3" target="C4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Use cases -->
+        <mxCell id="U1" value="Churn / retention" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EE6C4D;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="70" y="280" width="170" height="55" as="geometry" /></mxCell>
+        <mxCell id="U2" value="Demand forecasting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EE6C4D;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="280" y="280" width="170" height="55" as="geometry" /></mxCell>
+        <mxCell id="U3" value="Risk / fraud scoring" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EE6C4D;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="490" y="280" width="170" height="55" as="geometry" /></mxCell>
+        <mxCell id="U4" value="Pipeline win-probability" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EE6C4D;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="690" y="280" width="150" height="55" as="geometry" /></mxCell>
+
+        <mxCell id="hub" value="Same architecture — swap the dataset, keep the pattern" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=12;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="300" y="185" width="300" height="50" as="geometry" /></mxCell>
+
+        <mxCell id="ph" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;" edge="1" parent="1" source="gP" target="hub"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="hu1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;endArrow=block;" edge="1" parent="1" source="hub" target="U1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="hu2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;endArrow=block;" edge="1" parent="1" source="hub" target="U2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="hu3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;endArrow=block;" edge="1" parent="1" source="hub" target="U3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="hu4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;endArrow=block;" edge="1" parent="1" source="hub" target="U4"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

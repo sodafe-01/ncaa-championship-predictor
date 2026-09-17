@@ -1,0 +1,136 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="arch1" name="End-to-End Architecture">
+    <mxGraphModel dx="1245" dy="579" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="gUsers" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8DA9C4;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#3D5A80;fontSize=12;fontStyle=1;" value="USERS" vertex="1">
+          <mxGeometry height="80" width="820" x="40" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gOrch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8DA9C4;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#3D5A80;fontSize=12;fontStyle=1;" value="REASONING &amp; ORCHESTRATION" vertex="1">
+          <mxGeometry height="110" width="820" x="40" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="gGov" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8DA9C4;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#3D5A80;fontSize=12;fontStyle=1;" value="GOVERNED SEMANTIC LAYER — BIGQUERY" vertex="1">
+          <mxGeometry height="120" width="820" x="40" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="gSrc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#8DA9C4;dashed=1;verticalAlign=top;align=left;spacingLeft=10;spacingTop=6;fontColor=#3D5A80;fontSize=12;fontStyle=1;" value="SOURCES (READ-ONLY)" vertex="1">
+          <mxGeometry height="110" width="820" x="40" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="EX" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EE6C4D;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=12;fontStyle=1;" value="Executive / Analyst" vertex="1">
+          <mxGeometry height="42" width="200" x="350" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="GEM" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" value="Gemini&#xa;conversation · reasoning · synthesis" vertex="1">
+          <mxGeometry height="55" width="290" x="120" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="AGENT" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0B2545;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;fontStyle=1;" value="BigQuery Data Agent&#xa;NL→SQL · grounded in Knowledge Catalog" vertex="1">
+          <mxGeometry height="55" width="300" x="555" y="173" as="geometry" />
+        </mxCell>
+        <mxCell id="CUR" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;" value="Curated tables&#xa;stg_ / f_ / mart_" vertex="1">
+          <mxGeometry height="60" width="175" x="70" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="BQML" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;" value="BQML models&#xa;ML.PREDICT" vertex="1">
+          <mxGeometry height="60" width="175" x="270" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="AIGEN" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;" value="AI.GENERATE&#xa;scouting narratives" vertex="1">
+          <mxGeometry height="60" width="175" x="470" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="SIM" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=#0B2545;fontColor=#FFFFFF;fontSize=11;" value="Bracket simulation&#xa;champion probabilities" vertex="1">
+          <mxGeometry height="60" width="175" x="670" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="RAW" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0FBFC;strokeColor=#3D5A80;fontColor=#0B2545;fontSize=11;" value="ncaa_basketball&#xa;raw tables" vertex="1">
+          <mxGeometry height="55" width="190" x="110" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="SCAN" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0FBFC;strokeColor=#3D5A80;fontColor=#0B2545;fontSize=11;" value="scan_results&#xa;Dataplex profiles" vertex="1">
+          <mxGeometry height="55" width="200" x="355" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="CAT" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0FBFC;strokeColor=#3D5A80;fontColor=#0B2545;fontSize=11;" value="Knowledge Catalog&#xa;NCAA Basketball Glossary" vertex="1">
+          <mxGeometry height="55" width="200" x="620" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="EX" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="GEM" value="Who wins &amp; why?">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="120" />
+              <mxPoint x="265" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="GEM" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=0.7;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="EX" value="answer &amp; confidence">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="175" />
+              <mxPoint x="320" y="136" />
+              <mxPoint x="500" y="136" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="GEM" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" target="AGENT" value="delegates data questions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="AGENT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;" target="GEM" value="results &amp; evidence">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="CUR" value="trusted SQL">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="585" y="272" />
+              <mxPoint x="157.5" y="272" />
+            </Array>
+            <mxPoint x="585" y="220" as="sourcePoint" />
+            <mxPoint x="157.5" y="352" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="AGENT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;exitX=0.35;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="BQML">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="228" />
+              <mxPoint x="610" y="290" />
+              <mxPoint x="357.5" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="AGENT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;exitX=0.55;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;" target="AIGEN">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="CUR" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=1;entryDx=0;entryDy=0;" target="SIM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="BQML" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#3D5A80;endArrow=block;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=1;entryDx=0;entryDy=0;" target="SIM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="SIM" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.9;entryY=1;entryDx=0;entryDy=0;" target="AGENT" value="P(champion) per team">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="757.5" y="310" />
+              <mxPoint x="825" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="AIGEN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#EE6C4D;fontColor=#3D5A80;fontSize=10;endArrow=block;exitX=0.7;exitY=0;exitDx=0;exitDy=0;entryX=0.65;entryY=1;entryDx=0;entryDy=0;" target="AGENT" value="grounded narrative">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="592.5" y="310" />
+              <mxPoint x="750" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="RAW" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8DA9C4;endArrow=block;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" target="CUR">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="SCAN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8DA9C4;endArrow=block;exitX=0.2;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="CUR">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="CAT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8DA9C4;endArrow=block;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="AGENT">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="880" y="547.5" />
+              <mxPoint x="880" y="200.5" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="CAT" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#8DA9C4;endArrow=block;exitX=0.15;exitY=0;exitDx=0;exitDy=0;entryX=0.85;entryY=1;entryDx=0;entryDy=0;" target="AIGEN">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
