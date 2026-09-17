@@ -1,9 +1,9 @@
 {{
-  config(
-    materialized="table",
-    enabled=false
-  )
+  config(materialized="table")
 }}
+
+-- Grain: one row per D1 team-season, 2014-2017 (351 per season). Owner: DE2 (story DE-06).
+-- 2014-2016 use observed returners (same player_id and team_id next season); 2017 uses the class proxy.
 
 WITH d1_teams AS (
   SELECT
