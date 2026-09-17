@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: ai_team_scouting
+    description: >
+      AI scouting report for every tournament team in every scenario (68 per scenario), written by Gemini
+      (gemini-2.5-flash through AI.GENERATE with an output schema) from the team's own pre-tournament numbers
+      only. Prompts carry no team name, conference or result, so the model cannot draw on knowledge of later
+      seasons. For the 2018-19 forecast the profile is the 2017-18 pre-tournament report card plus the
+      projected rating. Materialized ahead of time; the demo never calls Gemini live.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, team_id]}}
+      - row_count_between: {arguments: {min_count: 68, max_count: 68, group_by: [scenario]}}
+      - expression_is_true: {arguments: {expression: "status = ''"}}
+      - expression_is_true: {arguments: {expression: "ARRAY_LENGTH(strengths) >= 1 AND ARRAY_LENGTH(weaknesses) >= 1"}}
+    columns:
+      - name: scenario
+        description: backtest_<season> or proj_2018.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament (2018 means 2018-19).
+      - name: season_label
+        description: Season as text, e.g. 2018-19.
+      - name: team_id
+        description: Tournament team.
+        data_tests: [not_null]
+      - name: strengths
+        description: Two or three strengths, each citing the team's numbers.
+      - name: weaknesses
+        description: Two or three weaknesses, each citing the team's numbers.
+      - name: style
+        description: One-sentence description of how the team plays.
+        data_tests: [not_null]
+      - name: x_factor
+        description: The single number most likely to decide the team's tournament games.
+        data_tests: [not_null]
+      - name: status
+        description: Empty when generation succeeded; otherwise the error returned by AI.GENERATE.
+      - name: prompt
+        description: Exact prompt sent to Gemini, kept for audit.
+      - name: endpoint
+        description: Gemini endpoint used.
+      - name: generated_at
+        description: When the report was generated.
