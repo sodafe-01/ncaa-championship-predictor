@@ -1,0 +1,71 @@
+version: 2
+
+models:
+  - name: stg_bracket
+    description: >
+      Each season's 67-game NCAA tournament rebuilt as a tree of slots (2013-14 to 2017-18), from the real
+      results because the data has no bracket table. Each slot names the round, region, the slot its winner
+      advances to, and for each side either the team placed directly (First Four and round of 64) or the
+      slot whose winner fills it. The simulator plays this tree round by round; ML2's projected 2018-19
+      bracket uses the same shape. Side a is the listed home team of the real game. Seeds come from the
+      historical tournament table, which ends with March 2017, so 2017-18 has no seeds.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, slot_id]}}
+      - row_count_between: {arguments: {min_count: 67, max_count: 67, group_by: [season]}}
+      - expression_is_true: {arguments: {expression: "next_slot_id IS NOT NULL", where: "ncaa_round != 'FINAL'"}}
+      - expression_is_true:
+          arguments: {expression: "(side_a_team_id IS NULL) != (side_a_from_slot IS NULL) AND (side_b_team_id IS NULL) != (side_b_from_slot IS NULL)"}
+      - expression_is_true:
+          arguments: {expression: "side_a_from_slot IS NULL AND side_b_from_slot IS NULL", where: "ncaa_round = 'FF'"}
+      - expression_is_true:
+          arguments: {expression: "side_a_from_slot IS NOT NULL AND side_b_from_slot IS NOT NULL", where: "ncaa_round_order >= 2"}
+      - expression_is_true:
+          arguments: {expression: "side_a_seed + side_b_seed = 17", where: "ncaa_round = 'R64' AND side_a_seed IS NOT NULL AND side_b_seed IS NOT NULL"}
+    columns:
+      - name: season
+        description: Season start year (2017 means 2017-18, whose tournament was played in March 2018).
+        data_tests: [not_null]
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: slot_id
+        description: >
+          Bracket slot: FF1-FF4 (First Four), {REGION}_R64_1-8, {REGION}_R32_1-4, {REGION}_S16_1-2,
+          {REGION}_E8, F4_1, F4_2 and FINAL, with REGION one of EAST, WEST, SOUTH, MIDWEST.
+        data_tests: [not_null]
+      - name: ncaa_round
+        description: Round of the slot (FF, R64, R32, S16, E8, F4, FINAL).
+        data_tests:
+          - not_null
+          - accepted_values: {arguments: {values: ['FF', 'R64', 'R32', 'S16', 'E8', 'F4', 'FINAL']}}
+      - name: ncaa_round_order
+        description: Round as a number, FF 0 through FINAL 6.
+      - name: region
+        description: Region of the slot (EAST, WEST, SOUTH, MIDWEST); for FF, the region of the round-of-64 slot it feeds; NULL for F4 and FINAL.
+      - name: next_slot_id
+        description: Slot the winner advances to; NULL for FINAL.
+      - name: next_slot_side
+        description: Side (a or b) of next_slot_id the winner fills.
+        data_tests:
+          - accepted_values: {arguments: {values: ['a', 'b']}}
+      - name: side_a_team_id
+        description: Team placed directly on side a (First Four and round of 64 only); NULL when side a is fed by another slot.
+      - name: side_a_from_slot
+        description: Slot whose winner fills side a; NULL when a team is placed directly.
+      - name: side_b_team_id
+        description: Team placed directly on side b (First Four and round of 64 only); NULL when side b is fed by another slot.
+      - name: side_b_from_slot
+        description: Slot whose winner fills side b; NULL when a team is placed directly.
+      - name: side_a_seed
+        description: Seed of the team placed directly on side a (2013-14 to 2016-17); NULL for fed sides and for 2017-18.
+      - name: side_b_seed
+        description: Seed of the team placed directly on side b (2013-14 to 2016-17); NULL for fed sides and for 2017-18.
+      - name: game_id
+        description: Sportradar id of the real game played in this slot.
+        data_tests: [not_null]
+      - name: actual_team_a_id
+        description: Team that really played on side a (the listed home team of the real game).
+      - name: actual_team_b_id
+        description: Team that really played on side b (the listed away team of the real game).
+      - name: actual_winner_team_id
+        description: Team that really won the game in this slot.
+        data_tests: [not_null]
