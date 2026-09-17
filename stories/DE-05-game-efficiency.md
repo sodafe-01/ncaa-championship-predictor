@@ -6,6 +6,12 @@
 
 One clean row per team per game with possessions and per-100-possession efficiency, ready for the opponent-adjusted ratings in DE-07.
 
+## As built (2026-09-16)
+
+Built and verified: 10/10 direct tests pass. `pre_ncaa` follows the strict date rule exactly, including
+the six CIT games played before the NCAA opener. The completeness test independently proves that every
+eligible source row reaches the feature table. Rows per season are 10,998 / 11,022 / 11,068 / 11,080.
+
 ## Files you own
 
 - `models/02_features/f_team_game_efficiency.sql`
@@ -19,7 +25,7 @@ One clean row per team per game with possessions and per-100-possession efficien
 
 ## Output contract
 
-Table. Grain: `game_id` × `team_id`. Rows: closed D1-vs-D1 games with `has_box_stats`, seasons `var('first_model_season')` to `var('last_season')`.
+Table. Grain: `game_id` × `team_id`. Rows: closed D1-vs-D1 games with a result (`win IS NOT NULL`) and `has_box_stats`, seasons `var('first_model_season')` to `var('last_season')`.
 
 | Column | Type | Rule |
 |---|---|---|
@@ -53,9 +59,10 @@ Using the shared `game_poss` makes one team's `oe` equal its opponent's `de`.
 
 ## Build notes (verified 2026-09-16)
 
-- 2014-15 to 2017-18: 10,998–11,080 rows per season, all 351 teams, at least 24 games each.
-- Median `game_poss` 66.7–71.2; average `oe` 99.7–102.1.
-- Broken rows exist (`game_poss` of 30.1 and 157.6). Keep them and flag them with `is_valid_efficiency_row`; DE-07 ignores them.
+- Measured on the built DE-01 views with this repo's `possessions` macro (0.44 × FTA): 10,998 / 11,022 / 11,068 / 11,080 rows for 2014-15 to 2017-18, all 351 teams, at least 24 games each.
+- Median `game_poss` 66.1–70.5; average `oe` 100.7–103.0 (range 34.8–166.3).
+- One broken game remains: 155 possessions in 2014-15 (2 rows outside 45–115). Keep it and flag it with `is_valid_efficiency_row`; DE-07 ignores it. The 30-possession row seen during planning was a zero-filled box score that DE-01's `has_box_stats` now excludes.
+- Filter `win IS NOT NULL`. One closed 2015-16 game (UTSA vs Central Arkansas) has a full box score but a recorded 0–0 final score and no result; without the filter its rows fail the `oe` range test.
 - Use `SAFE_DIVIDE` for every ratio.
 
 ## Tests first
@@ -71,7 +78,8 @@ models:
       - row_count_between: {arguments: {min_count: 2, max_count: 2, group_by: [game_id]}}
       - row_count_between: {arguments: {min_count: 10500, max_count: 11500, group_by: [season]}}
       - row_count_between:
-          arguments: {min_count: 0, max_count: 25, group_by: [season], where: "NOT is_valid_efficiency_row"}
+          arguments: {min_count: 0, max_count: 25, group_by: [season]}
+          config: {where: "NOT is_valid_efficiency_row"}
       - expression_is_true:
           arguments: {expression: "NOT in_pre_ncaa_scope", where: "postseason_kind = 'NCAA'"}
     columns:
@@ -87,19 +95,36 @@ The last `row_count_between` returns seasons with *more than 25* invalid rows. S
 `data_tests/f_team_game_efficiency_scope.sql`:
 
 ```sql
--- Feature rows are closed, and the pre-NCAA flag is exactly the strict date cutoff.
+-- Feature rows contain every eligible source row, and pre-NCAA is exactly the strict date cutoff.
+WITH eligible AS (
+  SELECT game_id, team_id
+  FROM {{ ref('stg_team_games') }}
+  WHERE is_closed
+    AND win IS NOT NULL
+    AND is_d1_matchup
+    AND has_box_stats
+    AND season BETWEEN {{ var('first_model_season') }} AND {{ var('last_season') }}
+), missing_eligible AS (
+  SELECT e.game_id, e.team_id
+  FROM eligible e
+  LEFT JOIN {{ ref('f_team_game_efficiency') }} f USING (game_id, team_id)
+  WHERE f.game_id IS NULL
+)
 SELECT 'non-closed game reached features' AS failed_check, f.game_id
 FROM {{ ref('f_team_game_efficiency') }} f
 JOIN {{ ref('stg_games') }} g USING (game_id)
 WHERE NOT g.is_closed
 UNION ALL
+SELECT 'game without a result reached features', game_id
+FROM {{ ref('f_team_game_efficiency') }}
+WHERE win IS NULL
+UNION ALL
 SELECT 'pre_ncaa flag differs from first-NCAA-date cutoff', game_id
 FROM {{ ref('f_team_game_efficiency') }}
 WHERE in_pre_ncaa_scope IS DISTINCT FROM (scheduled_date < first_ncaa_date)
 UNION ALL
-SELECT 'national postseason game leaked into pre_ncaa', game_id
-FROM {{ ref('f_team_game_efficiency') }}
-WHERE in_pre_ncaa_scope AND postseason_kind IN ('NCAA', 'NIT', 'CBI', 'CIT')
+SELECT 'eligible source row missing from features', game_id
+FROM missing_eligible
 ```
 
 `data_tests/f_team_game_efficiency_mirror.sql`:

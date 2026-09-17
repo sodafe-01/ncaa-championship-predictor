@@ -6,6 +6,16 @@
 
 Fill every column of the frozen DE-02 contract with real numbers. `adj_net` becomes the team-strength rating used by the model, the simulation and the story.
 
+## As built (2026-09-16)
+
+Built and verified: 47/47 report-card tests pass (DE-02 tests, the column tests below, the sanity test and the join-coverage test). Column names, types and order are unchanged. Findings:
+
+1. **`tempo` is exactly `AVG(game_poss)`.** Savannah State 2017-18 reaches 85.64 possessions per game, so the evidence-based upper bound is 86. A singular sanity check independently recomputes the contract formula for every team, season and scope.
+2. **`hca` is 0.036–0.040, not 0.015–0.02:** 0.0383 / 0.0361 / 0.0368 / 0.0403 in `full` for 2014-15 to 2017-18, with `pre_ncaa` within 0.0005. The raw home/away `oe` ratio also carries schedule strength (stronger teams host weaker ones), which pushes it up. The formula is kept as written; revisit only with integrator approval.
+3. **Convergence:** the largest change in `adj_net` between passes 9 and 10 is 0.10–0.15 points per 100 possessions.
+4. The six CIT first-round games played before the First Four are included in both record and efficiency columns under the strict first-NCAA-date cutoff.
+5. Seasons come from `dq_season_gate.model_ready`; `experience_index` uses the gate's `class_usable` (2017-18 only).
+
 ## Files you own
 
 - `models/02_features/f_team_season.sql` (replace the skeleton)
@@ -21,9 +31,9 @@ Fill every column of the frozen DE-02 contract with real numbers. `adj_net` beco
 
 1. **Seasons:** only seasons where `dq_season_gate.model_ready` (2014–2017).
 2. **Rows per scope:** `pre_ncaa` uses `in_pre_ncaa_scope`; `full` uses every row. Efficiency columns use only `is_valid_efficiency_row`.
-3. **Record columns** (`games` … `win_pct`): keep the DE-02 logic (all closed games, any opponent).
+3. **Record columns** (`games` … `win_pct`): keep the DE-02 logic (closed games with a result, any opponent).
 4. **Raw efficiency and tempo:** `raw_oe = 100 * SUM(points) / SUM(game_poss)`, `raw_de` likewise, `raw_net = raw_oe - raw_de`, `tempo = AVG(game_poss)`, `d1_games = COUNT(*)`.
-5. **Venue adjustment:** per season × scope, `hca = SQRT(AVG(oe | home) / AVG(oe | away)) - 1` over non-neutral rows (expect roughly 0.015–0.02). Neutralize each row: home `oe_n = oe / (1 + hca)`, `de_n = de * (1 + hca)`; away `oe_n = oe * (1 + hca)`, `de_n = de / (1 + hca)`; neutral unchanged.
+5. **Venue adjustment:** per season × scope, `hca = SQRT(AVG(oe | home) / AVG(oe | away)) - 1` over non-neutral rows (expect roughly 0.015–0.02). Neutralize each row: home `oe_n = oe / (1 + hca)`, `de_n = de * (1 + hca)`; away `oe_n = oe * (1 + hca)`, `de_n = de / (1 + hca)`; neutral unchanged. `is_neutral` is best-effort (DE-01): 2.6% of regular-season games are flagged neutral and some neutral-site events count as home or away, which can pull `hca` slightly low. Report it.
 6. **Opponent adjustment, 10 passes with a Jinja loop:** `lg` = league average `oe` for the season × scope. Start with `adj_oe_0 = AVG(oe_n)` and `adj_de_0 = AVG(de_n)` per team. On pass k, for each row: `g_oe = oe_n * lg / opp_adj_de_(k-1)` and `g_de = de_n * lg / opp_adj_oe_(k-1)`. The team's `adj_oe_k` is the `game_poss`-weighted average of `g_oe` (same for `adj_de_k`). Then rescale so the team averages of both equal `lg`. Generate the CTEs with `{% for k in range(1, 11) %}`.
 7. `adj_net = adj_oe - adj_de`; `sos_adj_net` = average of the opponents' final `adj_net` over the team's rows.
 8. **`conference_strength`:** after final `adj_net`, calculate `AVG(adj_net) OVER (PARTITION BY season, scope, conf_alias)`. Include every team in the conference so every member receives the same conference-season-scope value. DE2 owns this calculation; ML2 consumes it for the forward projection.
@@ -51,7 +61,7 @@ Keep the DE-02 tests and add these to `_f_team_season.yml`:
       - name: adj_net
         data_tests: [not_null]
       - name: tempo
-        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 85}}}]
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 86}}}]
       - name: efg_pct
         data_tests: [not_null, {accepted_range: {arguments: {min_value: 0.35, max_value: 0.65}}}]
       - name: tov_pct

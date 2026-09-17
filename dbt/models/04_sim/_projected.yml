@@ -1,0 +1,113 @@
+version: 2
+
+models:
+  - name: projected_field
+    description: >
+      The projected 2018-19 NCAA tournament field (68 teams) built from f_team_projection: the best projected
+      team in each 2017-18 conference gets an automatic bid (32) and the next 36 by projected rating get at-large
+      bids. The four lowest-rated automatic bids and the four lowest-rated at-large teams play the First Four in
+      pairs. The 64 bracket entries are seeded 1-16 by projected rating and spread over the regions in S-curve
+      order. Conference membership is the 2017-18 best-available value, not audited membership; the committee's
+      conference-separation rules are not modeled.
+    data_tests:
+      - row_count_between: {arguments: {min_count: 68, max_count: 68}}
+      - row_count_between:
+          arguments: {min_count: 32, max_count: 32}
+          config: {where: "bid_type = 'auto'"}
+      - row_count_between:
+          arguments: {min_count: 8, max_count: 8}
+          config: {where: "is_first_four"}
+      - row_count_between:
+          arguments: {min_count: 4, max_count: 6, group_by: [seed]}
+    columns:
+      - name: season
+        description: Projected season start year (2018 means 2018-19).
+      - name: scenario
+        description: Simulation scenario name for the forecast, proj_2018.
+      - name: team_id
+        description: Team identifier.
+        data_tests: [unique, not_null]
+      - name: market
+        description: School name.
+      - name: conf_alias
+        description: 2017-18 conference (best available, not audited membership).
+      - name: projected_adj_net
+        description: Projected 2018-19 pre-tournament adj_net.
+      - name: bid_type
+        description: auto (best projected team in its conference) or at_large.
+        data_tests:
+          - accepted_values: {arguments: {values: ['auto', 'at_large']}}
+      - name: field_rank
+        description: Rank of projected_adj_net within the field (1 = strongest).
+      - name: is_first_four
+        description: TRUE for the eight teams playing the First Four.
+      - name: first_four_pair
+        description: First Four pairing the team plays in (ff_auto_1, ff_auto_2, ff_at_large_1, ff_at_large_2); NULL otherwise.
+      - name: seed
+        description: Projected seed (1-16); both teams of a First Four pair share the seed line they play for.
+        data_tests:
+          - not_null
+          - accepted_range: {arguments: {min_value: 1, max_value: 16}}
+      - name: region
+        description: Projected region (EAST, WEST, SOUTH, MIDWEST).
+        data_tests:
+          - accepted_values: {arguments: {values: ['EAST', 'WEST', 'SOUTH', 'MIDWEST']}}
+
+  - name: projected_bracket
+    description: >
+      The projected 2018-19 bracket as 67 slots in exactly the stg_bracket shape, so the simulator plays it like a
+      real season. Round-of-64 pairings follow the standard seed order with the better seed on side a; the Final
+      Four pairs EAST with MIDWEST and WEST with SOUTH. No games have been played, so game_id and the actual_*
+      columns are NULL.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, slot_id]}}
+      - row_count_between: {arguments: {min_count: 67, max_count: 67}}
+      - expression_is_true: {arguments: {expression: "next_slot_id IS NOT NULL", where: "ncaa_round != 'FINAL'"}}
+      - expression_is_true:
+          arguments: {expression: "(side_a_team_id IS NULL) != (side_a_from_slot IS NULL) AND (side_b_team_id IS NULL) != (side_b_from_slot IS NULL)"}
+      - expression_is_true:
+          arguments: {expression: "side_a_from_slot IS NULL AND side_b_from_slot IS NULL", where: "ncaa_round = 'FF'"}
+      - expression_is_true:
+          arguments: {expression: "side_a_from_slot IS NOT NULL AND side_b_from_slot IS NOT NULL", where: "ncaa_round_order >= 2"}
+      - expression_is_true:
+          arguments: {expression: "side_a_seed + side_b_seed = 17", where: "ncaa_round = 'R64' AND side_a_seed IS NOT NULL AND side_b_seed IS NOT NULL"}
+    columns:
+      - name: season
+        description: Projected season start year (2018 means 2018-19).
+      - name: season_label
+        description: Projected season as text, 2018-19.
+      - name: slot_id
+        description: Bracket slot, same naming as stg_bracket (FF1-FF4, {REGION}_R64_1-8 ... F4_1, F4_2, FINAL).
+        data_tests: [not_null]
+      - name: ncaa_round
+        description: Round of the slot (FF, R64, R32, S16, E8, F4, FINAL).
+      - name: ncaa_round_order
+        description: Round as a number, FF 0 through FINAL 6.
+      - name: region
+        description: Region of the slot; for FF, the region of the round-of-64 slot it feeds; NULL for F4 and FINAL.
+      - name: next_slot_id
+        description: Slot the winner advances to; NULL for FINAL.
+      - name: next_slot_side
+        description: Side (a or b) of next_slot_id the winner fills.
+        data_tests:
+          - accepted_values: {arguments: {values: ['a', 'b']}}
+      - name: side_a_team_id
+        description: Team placed directly on side a (First Four and round of 64 only).
+      - name: side_a_from_slot
+        description: Slot whose winner fills side a.
+      - name: side_b_team_id
+        description: Team placed directly on side b (First Four and round of 64 only).
+      - name: side_b_from_slot
+        description: Slot whose winner fills side b.
+      - name: side_a_seed
+        description: Projected seed of the team placed directly on side a.
+      - name: side_b_seed
+        description: Projected seed of the team placed directly on side b.
+      - name: game_id
+        description: Always NULL; the projected bracket has not been played.
+      - name: actual_team_a_id
+        description: Always NULL; the projected bracket has not been played.
+      - name: actual_team_b_id
+        description: Always NULL; the projected bracket has not been played.
+      - name: actual_winner_team_id
+        description: Always NULL; the projected bracket has not been played.

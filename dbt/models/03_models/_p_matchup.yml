@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: p_matchup
+    description: >
+      Win probability for every ordered pair of a scenario's 68 tournament teams on a neutral court: the
+      simulator's input. Backtest scenarios (backtest_2014 = March 2015 tournament … backtest_2017 = March 2018)
+      use the chosen walk-forward family for that season on pre-tournament report cards. The forecast scenario
+      (proj_2018 = 2018-19) uses the rating-only forward model on projected ratings, because the projection has
+      ratings but no style numbers. Probabilities are symmetrized so p(a, b) + p(b, a) = 1.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, team_a_id, team_b_id]}}
+      - row_count_between: {arguments: {min_count: 4556, max_count: 4556, group_by: [scenario]}}
+    columns:
+      - name: scenario
+        description: backtest_<season> for a real tournament, proj_2018 for the 2018-19 forecast.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament (2018 means 2018-19).
+      - name: model_name
+        description: Model family behind the probabilities (the chosen full-feature family, or rating_only for the forecast).
+      - name: team_a_id
+        description: Team the probability is for.
+      - name: team_b_id
+        description: Opponent.
+      - name: p_a_wins
+        description: Probability that team A beats team B on a neutral court.
+        data_tests:
+          - not_null
+          - accepted_range: {arguments: {min_value: 0, max_value: 1}}
+
+  - name: m_explain_topk
+    description: >
+      Why the chosen win model favors a team: the top three feature attributions from ML.EXPLAIN_PREDICT. Game
+      rows explain each real NCAA tournament game from each team's side (backtests). Team-profile rows explain
+      each tournament team's pre-tournament report card against the average team in that scenario's field on a
+      neutral court. For the forecast, the forward model explains the 2017-18 report card, the latest measured
+      profile; the projected rating change is not part of these attributions. Features are team-minus-opponent
+      differences (d_*) or home_indicator.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [scenario, explain_level, game_id, team_id, attribution_rank]}
+      - row_count_between:
+          arguments: {min_count: 3, max_count: 3, group_by: [scenario, game_id, team_id]}
+          config: {where: "explain_level = 'game'"}
+      - row_count_between:
+          arguments: {min_count: 204, max_count: 204, group_by: [scenario]}
+          config: {where: "explain_level = 'team_profile'"}
+    columns:
+      - name: scenario
+        description: backtest_<season> or proj_2018.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament.
+      - name: model_name
+        description: Chosen full-feature model family that produced the attributions.
+      - name: explain_level
+        description: game (a real tournament game) or team_profile (the team against the field average).
+        data_tests:
+          - accepted_values: {arguments: {values: ['game', 'team_profile']}}
+      - name: game_id
+        description: NCAA tournament game id for game rows; NULL for team-profile rows.
+      - name: team_id
+        description: Team whose win probability is explained.
+        data_tests: [not_null]
+      - name: opponent_id
+        description: Opponent for game rows; NULL for team-profile rows (the field average).
+      - name: p_team_wins
+        description: Model probability that the team wins (the game, or against an average field team).
+      - name: attribution_rank
+        description: 1 = the feature that moved the prediction most.
+        data_tests:
+          - accepted_range: {arguments: {min_value: 1, max_value: 3}}
+      - name: feature
+        description: Model feature, a team-minus-opponent difference (d_*) or home_indicator.
+      - name: attribution
+        description: How much the feature moved the prediction (log-odds scale; positive favors the team).
+      - name: feature_value
+        description: Value of the feature for this row (team minus opponent or field average).

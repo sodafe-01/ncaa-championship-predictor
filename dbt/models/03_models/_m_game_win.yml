@@ -1,0 +1,121 @@
+version: 2
+
+models:
+  - name: m_game_win_lr
+    description: >
+      Walk-forward logistic regression win model (the baseline family). Its pre-hooks train one BQML model per
+      backtest season, m_game_win_lr_s<season>, on f_matchups rows dated before that season's NCAA tournament
+      (earlier seasons plus the season's own pre_ncaa rows), with every team-A-minus-team-B feature and the home
+      indicator. The table holds that model's predictions for the season's NCAA tournament rows.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, game_id, team_a_id]}}
+      - row_count_between: {arguments: {min_count: 134, max_count: 134, group_by: [season]}}
+    columns: &prediction_columns
+      - name: season
+        description: Backtest season start year (2014 means the March 2015 tournament).
+        data_tests: [not_null]
+      - name: model_name
+        description: Model family (logistic_reg, boosted_tree or rating_only).
+      - name: game_id
+        description: NCAA tournament game id.
+      - name: team_a_id
+        description: Team the probability is for (each game appears once per team).
+      - name: team_b_id
+        description: Opponent.
+      - name: label_a_wins
+        description: 1 if team A really won, else 0.
+      - name: p_a_wins
+        description: Predicted probability that team A wins.
+        data_tests:
+          - not_null
+          - accepted_range: {arguments: {min_value: 0, max_value: 1}}
+
+  - name: m_game_win_bt
+    description: >
+      Walk-forward boosted-tree win model (the challenger family). Pre-hooks train m_game_win_bt_s<season> per
+      backtest season on the same rows and features as m_game_win_lr (30 trees, depth 4). The table holds its
+      predictions for the season's NCAA tournament rows.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, game_id, team_a_id]}}
+      - row_count_between: {arguments: {min_count: 134, max_count: 134, group_by: [season]}}
+    columns: *prediction_columns
+
+  - name: m_game_win_rt
+    description: >
+      Walk-forward rating-only logistic regression: the adj_net difference and the home indicator only. It is the
+      family the 2018-19 forecast uses, because the projection has ratings but no style numbers. Pre-hooks train
+      m_game_win_rt_s<season>; the table holds its predictions for the season's NCAA tournament rows.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, game_id, team_a_id]}}
+      - row_count_between: {arguments: {min_count: 134, max_count: 134, group_by: [season]}}
+    columns: *prediction_columns
+
+  - name: m_game_win_all
+    description: >
+      Forward models for the 2018-19 pick, trained on every f_matchups row through 2017-18 (m_game_win_lr_all,
+      m_game_win_bt_all, m_game_win_rt_all). The table holds each model's global feature importance
+      (ML.GLOBAL_EXPLAIN).
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [model_name, feature]}}
+    columns:
+      - name: model_name
+        description: Model family (logistic_reg, boosted_tree or rating_only).
+      - name: feature
+        description: Model input, a team-A-minus-team-B difference (d_*) or home_indicator.
+        data_tests: [not_null]
+      - name: attribution
+        description: Global importance of the feature in that model (ML.GLOBAL_EXPLAIN).
+
+  - name: m_game_win
+    description: >
+      All walk-forward tournament predictions in one table (three families × backtest seasons 2014-2017 × 134
+      tournament rows), with the chosen family flagged. The chosen family is whichever of logistic_reg and
+      boosted_tree has the lower average log loss over the core tournaments (seasons 2014-2016); it drives the
+      backtest simulations and explanations.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, model_name, game_id, team_a_id]}}
+      - row_count_between: {arguments: {min_count: 402, max_count: 402, group_by: [season]}}
+      - row_count_between:
+          arguments: {min_count: 134, max_count: 134, group_by: [season]}
+          config: {where: "is_chosen_model"}
+    columns:
+      - name: season
+        description: Backtest season start year (2014 means the March 2015 tournament).
+      - name: model_name
+        description: Model family (logistic_reg, boosted_tree or rating_only).
+        data_tests:
+          - accepted_values: {arguments: {values: ['logistic_reg', 'boosted_tree', 'rating_only']}}
+      - name: game_id
+        description: NCAA tournament game id.
+      - name: team_a_id
+        description: Team the probability is for.
+      - name: team_b_id
+        description: Opponent.
+      - name: label_a_wins
+        description: 1 if team A really won, else 0.
+      - name: p_a_wins
+        description: Predicted probability that team A wins.
+        data_tests:
+          - not_null
+          - accepted_range: {arguments: {min_value: 0, max_value: 1}}
+      - name: is_chosen_model
+        description: TRUE for the full-feature family with the lower average core-tournament log loss.
+        data_tests: [not_null]
+
+  - name: m_game_win_calibration
+    description: >
+      Calibration of each model family on the core tournaments (seasons 2014-2016): predictions grouped into
+      tenths of probability, with the average prediction next to how often team A really won.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [model_name, prob_bucket]}}
+    columns:
+      - name: model_name
+        description: Model family (logistic_reg, boosted_tree or rating_only).
+      - name: prob_bucket
+        description: Probability tenth, 0 (0-0.1) to 9 (0.9-1.0).
+      - name: rows_scored
+        description: Tournament rows in the bucket.
+      - name: avg_predicted
+        description: Average predicted probability in the bucket.
+      - name: actual_win_rate
+        description: Share of the bucket's rows where team A won.

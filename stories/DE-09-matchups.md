@@ -43,6 +43,7 @@ Left out on purpose: seeds (not available for the season we forecast), `experien
 
 - **In-season leakage:** a regular-season row's `pre_ncaa` report card includes that game. That's acceptable for training but inflates confidence, so ML1 checks calibration on tournament rows, which have none.
 - **Walk-forward for ML1:** for backtest season s, train on rows with `season < s OR (season = s AND is_training_row)`; score rows with `season = s AND is_tournament_row`.
+- `venue_a` and `home_indicator` inherit DE-01's best-effort `is_neutral`: NCAA tournament games are always neutral, but some neutral-site regular-season events appear as home or away.
 
 ## Tests first
 
@@ -55,7 +56,9 @@ models:
     data_tests:
       - unique_combination_of_columns: {arguments: {combination_of_columns: [game_id, team_a_id]}}
       - row_count_between: {arguments: {min_count: 2, max_count: 2, group_by: [game_id]}}
-      - row_count_between: {arguments: {min_count: 134, max_count: 134, group_by: [season], where: "is_tournament_row AND season BETWEEN 2014 AND 2016"}}
+      - row_count_between:
+          arguments: {min_count: 134, max_count: 134, group_by: [season]}
+          config: {where: "is_tournament_row AND season BETWEEN 2014 AND 2016"}
       - expression_is_true: {arguments: {expression: "home_indicator = 0", where: "venue_a = 'neutral'"}}
     columns:
       - name: label_a_wins

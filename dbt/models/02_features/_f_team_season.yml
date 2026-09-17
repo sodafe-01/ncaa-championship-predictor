@@ -1,0 +1,179 @@
+version: 2
+
+models:
+  - name: f_team_season
+    description: >
+      Report card: one row per season × scope × D1 team (351 per season and scope), for the seasons the
+      data-quality gate marks model-ready (2014-15 to 2017-18). Scopes are pre_ncaa (games dated before
+      that season's first NCAA tournament game, conference tournaments included) and full (the whole
+      season). Record columns count every closed game with a result; efficiency columns use valid
+      D1-vs-D1 box scores, neutralized for home court and adjusted for opponent strength over 10 passes.
+      adj_net is the team-strength rating used by the model, the simulation and the story. Grain and
+      column names are frozen in DE-02. Conference is the most common per-game conf_alias: the best
+      available source signal, not audited historical membership.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [season, scope, team_id]
+      - row_count_between:
+          arguments:
+            min_count: 351
+            max_count: 351
+            group_by: [season, scope]
+      - expression_is_true:
+          arguments:
+            expression: "wins + losses = games"
+      - expression_is_true: {arguments: {expression: "experience_index IS NULL", where: "season < 2017"}}
+      - expression_is_true: {arguments: {expression: "experience_index IS NOT NULL", where: "season = 2017"}}
+    columns:
+      - name: season
+        description: Season start year (2017 = 2017-18).
+        data_tests: [not_null]
+      - name: season_label
+        description: Academic label, e.g. 2017-18.
+      - name: scope
+        description: pre_ncaa for tournament prediction inputs; full for a finished season.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['pre_ncaa', 'full']
+      - name: team_id
+        description: Sportradar team id.
+        data_tests: [not_null]
+      - name: market
+        description: School name, e.g. Villanova.
+      - name: alias
+        description: Short team code, e.g. VILL.
+      - name: conf_alias
+        description: >
+          Most common per-game conf_alias for the team in this season and
+          scope. Best available source signal, not audited historical membership.
+      - name: games
+        description: Closed games with a result (win IS NOT NULL) in scope, any opponent.
+        data_tests: [not_null]
+      - name: wins
+        description: Closed wins in scope.
+        data_tests: [not_null]
+      - name: losses
+        description: Closed non-wins in scope (games − wins).
+        data_tests: [not_null]
+      - name: win_pct
+        description: wins / games.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: d1_games
+        description: Valid D1-vs-D1 games in scope used for the efficiency columns.
+      - name: tempo
+        description: Average game possessions over valid D1-vs-D1 games in scope.
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 55, max_value: 86}}}]
+      - name: raw_oe
+        description: Points scored per 100 possessions, before any adjustment.
+      - name: raw_de
+        description: Points allowed per 100 possessions, before any adjustment.
+      - name: raw_net
+        description: raw_oe − raw_de.
+      - name: adj_oe
+        description: >
+          Adjusted offensive efficiency: points per 100 possessions against an average defense on a
+          neutral floor (home-court neutralized, then 10 passes of opponent adjustment).
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 70, max_value: 140}}}]
+      - name: adj_de
+        description: >
+          Adjusted defensive efficiency: points allowed per 100 possessions against an average offense on
+          a neutral floor. Lower is better.
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 70, max_value: 140}}}]
+      - name: adj_net
+        description: adj_oe − adj_de; the main team-strength rating (points per 100 possessions better than average).
+        data_tests: [not_null]
+      - name: sos_adj_net
+        description: Strength of schedule, the average final adj_net of the opponents in the team's valid games in scope.
+        data_tests: [not_null]
+      - name: conference_strength
+        description: >
+          Mean adj_net for all teams with the same season, scope and
+          conf_alias. Conference membership is the best available
+          source signal and is not audited historical membership.
+        data_tests: [not_null]
+      - name: efg_pct
+        description: Effective field-goal percentage from season sums, (FGM + 0.5 × 3PM) / FGA.
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 0.35, max_value: 0.65}}}]
+      - name: tov_pct
+        description: Turnovers per possession from season sums.
+        data_tests: [{accepted_range: {arguments: {min_value: 0.08, max_value: 0.30}}}]
+      - name: orb_pct
+        description: Offensive rebound rate from season sums, ORB / (ORB + opponent DRB).
+        data_tests: [{accepted_range: {arguments: {min_value: 0.12, max_value: 0.50}}}]
+      - name: ftr
+        description: Free-throw rate from season sums, FTA / FGA.
+        data_tests: [{accepted_range: {arguments: {min_value: 0.15, max_value: 0.65}}}]
+      - name: opp_efg_pct
+        description: Opponents' effective field-goal percentage from season sums.
+      - name: opp_tov_pct
+        description: Opponents' turnovers per possession from season sums.
+      - name: drb_pct
+        description: Defensive rebound rate from season sums, DRB / (DRB + opponent ORB).
+      - name: opp_ftr
+        description: Opponents' free-throw rate from season sums, FTA / FGA.
+      - name: three_par
+        description: Three-point attempt rate from season sums, 3PA / FGA.
+        data_tests: [{accepted_range: {arguments: {min_value: 0.15, max_value: 0.65}}}]
+      - name: three_pct
+        description: Three-point percentage from season sums, 3PM / 3PA.
+      - name: ft_pct
+        description: Free-throw percentage from season sums, FTM / FTA.
+      - name: last10_net
+        description: Raw net points per 100 possessions over the team's last 10 valid D1-vs-D1 games in scope.
+      - name: ap_rank_last
+        description: AP rank at the team's last closed game in scope; NULL = unranked.
+      - name: experience_index
+        description: >
+          Minutes-weighted class (FR = 1 … GR = 5) over played player-games in scope. Only 2017-18, the
+          one season the data-quality gate marks class as usable.
+        data_tests: [{accepted_range: {arguments: {min_value: 1, max_value: 5}}}]
+      - name: ret_min_share
+        description: Share of minutes expected back next season, from f_roster_continuity (same value in both scopes).
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: ret_pts_share
+        description: Share of points expected back next season, from f_roster_continuity (same value in both scopes).
+      - name: ret_basis
+        description: actual (2014-15 to 2016-17, observed returners) or class_proxy (2017-18, FR/SO/JR share).
+      - name: program_win_pct_5y
+        description: Program win percentage over the previous five seasons (historical season records), wins / (wins + losses).
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: rank_adj_net
+        description: 1 = best adj_net in season × scope.
+        data_tests: [not_null]
+      - name: pctl_adj_oe
+        description: Percentile of adj_oe within season × scope, 0–1, 1 = best offense.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_adj_de
+        description: Percentile of adj_de within season × scope, 0–1, 1 = best defense (lowest adj_de).
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_adj_net
+        description: Percentile of adj_net within season × scope, 0–1, 1 = strongest team.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_tempo
+        description: Percentile of tempo within season × scope, 0–1, 1 = fastest.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_efg_pct
+        description: Percentile of efg_pct within season × scope, 0–1, 1 = best shooting.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_tov_pct
+        description: Percentile of tov_pct within season × scope, 0–1, 1 = fewest turnovers.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_orb_pct
+        description: Percentile of orb_pct within season × scope, 0–1, 1 = best offensive rebounding.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_ftr
+        description: Percentile of ftr within season × scope, 0–1, 1 = most free-throw attempts.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_three_par
+        description: Percentile of three_par within season × scope, 0–1, 1 = most three-point heavy.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: pctl_opp_efg_pct
+        description: Percentile of opp_efg_pct within season × scope, 0–1, 1 = best defense (lowest opponent eFG%).
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]

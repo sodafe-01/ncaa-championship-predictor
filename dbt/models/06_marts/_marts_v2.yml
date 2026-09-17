@@ -1,0 +1,190 @@
+version: 2
+
+models:
+  - name: mart_title_odds
+    description: >
+      Championship odds for every tournament team in every scenario, from 10,000 simulated tournaments per
+      scenario. The forecast scenario, proj_2018, is the 2018-19 prediction: projected ratings (with an ~80% band)
+      played through a projected bracket. Backtest scenarios replay the real March 2015-2018 brackets using only
+      what was known before each tournament (backtest_2014 = March 2015 … backtest_2017 = March 2018), with what
+      really happened alongside. Conference is the best available record, not audited historical membership.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, team_id]}}
+      - row_count_between: {arguments: {min_count: 68, max_count: 68, group_by: [scenario]}}
+      - row_count_between:
+          arguments: {min_count: 1, max_count: 1}
+          config: {where: "is_forecast AND odds_rank = 1"}
+    columns:
+      - name: scenario
+        description: proj_2018 for the 2018-19 forecast; backtest_<season> for a replayed real tournament.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament (2018 means 2018-19; 2014 means the March 2015 tournament).
+      - name: season_label
+        description: Season as text, e.g. 2018-19.
+      - name: is_forecast
+        description: TRUE for the 2018-19 forecast scenario.
+      - name: team_id
+        description: Team identifier.
+        data_tests: [not_null]
+      - name: team_name
+        description: Full team name, e.g. Villanova Wildcats.
+        data_tests: [not_null]
+      - name: conference
+        description: >
+          Conference short name (for the forecast, the team's 2017-18 conference). Best available record, not
+          audited historical membership.
+      - name: color_hex
+        description: Team's primary color as a hex code.
+      - name: logo_url
+        description: Link to the team's medium-size logo.
+      - name: seed
+        description: Real seed for the March 2015-2017 backtests, projected seed for the forecast, empty for the March 2018 backtest (no seeds in the data).
+      - name: region
+        description: Bracket region (EAST, WEST, SOUTH, MIDWEST).
+      - name: p_round_of_32
+        description: Chance of reaching the round of 32.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_sweet_16
+        description: Chance of reaching the Sweet 16.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_elite_8
+        description: Chance of reaching the Elite Eight.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_final_four
+        description: Chance of reaching the Final Four.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_final
+        description: Chance of reaching the championship game.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: p_champion
+        description: Chance of winning the national championship.
+        data_tests: [not_null, {accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: odds_rank
+        description: Rank by championship chance within the scenario (1 = favorite).
+        data_tests: [not_null]
+      - name: adj_margin
+        description: >
+          Team strength in points per 100 possessions better than an average team: the pre-tournament adjusted
+          margin for backtests, the projected 2018-19 adjusted margin for the forecast.
+      - name: adj_margin_low
+        description: Low end of the forecast's ~80% band for the projected adjusted margin; empty for backtests.
+      - name: adj_margin_high
+        description: High end of the forecast's ~80% band for the projected adjusted margin; empty for backtests.
+      - name: strength_rank
+        description: Rank of adj_margin among all Division I teams (projected rank for the forecast).
+      - name: actual_last_round
+        description: Furthest round the team really reached (backtests only).
+      - name: is_actual_champion
+        description: TRUE when the team really won that tournament (backtests only).
+
+  - name: mart_backtest
+    description: >
+      The backtest scorecard: how each win model would have predicted the March 2015-2018 NCAA tournaments using
+      only information from before each one, against two simple baselines (the better seed wins at its
+      historical rate; the better record wins at its in-season rate). Lower log loss is better. The core
+      tournaments are March 2015-2017; March 2018 is an extension with no seed baseline because the data has no
+      2018 seeds. The real champion's pre-tournament odds rank comes from the simulation of the chosen model.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, model_name]}}
+    columns:
+      - name: season
+        description: Season start year (2014 means the March 2015 tournament).
+        data_tests: [not_null]
+      - name: season_label
+        description: Season as text, e.g. 2014-15.
+      - name: is_core_season
+        description: TRUE for the core March 2015-2017 tournaments.
+      - name: model_name
+        description: Model family (logistic_reg, boosted_tree, or rating_only, the family the forecast uses).
+        data_tests: [not_null]
+      - name: is_chosen_model
+        description: TRUE for the full-feature family chosen by lower core log loss and used in the simulations.
+      - name: games_scored
+        description: Tournament games predicted (67 per tournament).
+      - name: log_loss
+        description: Average log loss of the model's tournament predictions (lower is better).
+      - name: brier
+        description: Average squared error of the predicted win probability (lower is better).
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: accuracy
+        description: Share of tournament games where the favored team won.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+      - name: seed_baseline_log_loss
+        description: Log loss of the better-seed baseline; empty for March 2018 (no seeds).
+      - name: record_baseline_log_loss
+        description: Log loss of the better-record baseline.
+      - name: beat_seed_baseline
+        description: TRUE when the model's log loss beat the seed baseline.
+      - name: beat_record_baseline
+        description: TRUE when the model's log loss beat the record baseline.
+      - name: champion_name
+        description: The tournament's real champion.
+      - name: champion_odds_rank
+        description: Where the real champion ranked in the model's pre-tournament title odds (1 = favorite); chosen model only.
+      - name: champion_p_champion
+        description: The real champion's pre-tournament title chance from the simulation; chosen model only.
+        data_tests: [{accepted_range: {arguments: {min_value: 0, max_value: 1}}}]
+
+  - name: mart_team_scouting
+    description: >
+      Scouting report for every tournament team in every scenario: strengths, weaknesses, style and x-factor
+      written by Gemini from the team's own numbers only (no name, so no outside knowledge), plus the win model's
+      top drivers for the team against an average tournament team from ML.EXPLAIN_PREDICT. For the 2018-19
+      forecast the report and drivers describe the 2017-18 pre-tournament profile.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [scenario, team_id]}}
+      - row_count_between: {arguments: {min_count: 68, max_count: 68, group_by: [scenario]}}
+    columns:
+      - name: scenario
+        description: proj_2018 for the 2018-19 forecast; backtest_<season> for a replayed tournament.
+        data_tests: [not_null]
+      - name: season
+        description: Season start year of the tournament.
+      - name: team_id
+        description: Team identifier.
+        data_tests: [not_null]
+      - name: team_name
+        description: Full team name.
+      - name: strengths
+        description: Bullet list of strengths, each citing the team's numbers.
+        data_tests: [not_null]
+      - name: weaknesses
+        description: Bullet list of weaknesses, each citing the team's numbers.
+        data_tests: [not_null]
+      - name: style
+        description: One-sentence description of how the team plays.
+      - name: x_factor
+        description: The number most likely to decide the team's tournament games.
+      - name: top_drivers
+        description: >
+          The three model features that most move the team's win chance against an average tournament team,
+          with the team's value relative to the field average and whether it raises or lowers the chance.
+        data_tests: [not_null]
+      - name: generated_at
+        description: When the scouting report was generated.
+
+  - name: mart_agent_qa
+    description: >
+      The rehearsed questions for the Front Office Analyst data agent, each with the SQL that answers it over the
+      marts, the answer verified against the built tables, and the verification date. The agent's canned fallback
+      and the source of its example question-to-SQL pairs (agent/examples.md).
+    data_tests:
+      - row_count_between: {arguments: {min_count: 8, max_count: 8}}
+    columns:
+      - name: question_id
+        description: Question number (1-8).
+        data_tests: [unique, not_null]
+      - name: question
+        description: The question as an executive would ask it.
+        data_tests: [not_null]
+      - name: expected_sql
+        description: SQL over the marts that answers the question.
+        data_tests: [not_null]
+      - name: expected_answer
+        description: The verified answer, in plain English with the supporting numbers.
+        data_tests: [not_null]
+      - name: verified_on
+        description: Date the answer was checked against the built marts.
+      - name: notes
+        description: Caveats the agent should mention with the answer.

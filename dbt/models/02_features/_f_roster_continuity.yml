@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: f_roster_continuity
+    description: >
+      One row per D1 team-season (2014–2017). Share of minutes and points
+      that return next season: observed roster overlap for 2014–2016, class
+      proxy (FR/SO/JR) for 2017. The roster signal for the 2018-19 forecast.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [season, team_id]
+      - row_count_between:
+          arguments:
+            min_count: 351
+            max_count: 351
+            group_by: [season]
+      - expression_is_true:
+          arguments:
+            expression: "ret_basis = 'actual'"
+            where: "season < 2017"
+      - expression_is_true:
+          arguments:
+            expression: "ret_basis = 'class_proxy'"
+            where: "season = 2017"
+    columns:
+      - name: season
+        description: Season start year whose production is measured (2017 = 2017-18).
+      - name: next_season
+        description: season + 1; the season returning production would play.
+      - name: team_id
+        description: Sportradar team id.
+      - name: team_minutes
+        description: Sum of minutes on played rows in closed games.
+      - name: team_points
+        description: Sum of points on played rows in closed games.
+      - name: ret_min_share_actual
+        description: >
+          Share of team_minutes by players who played at least one game for
+          the same team next season. NULL for 2017 (no next season in the data).
+      - name: ret_pts_share_actual
+        description: Same as ret_min_share_actual for points.
+      - name: ret_min_share_class
+        description: >
+          Share of minutes with a known class played by FR, SO or JR
+          (class_rank <= 3). Populated for 2017 only.
+      - name: ret_pts_share_class
+        description: Same as ret_min_share_class for points. 2017 only.
+      - name: ret_min_share
+        description: COALESCE(ret_min_share_actual, ret_min_share_class).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: ret_pts_share
+        description: COALESCE(ret_pts_share_actual, ret_pts_share_class).
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: ret_basis
+        description: actual for 2014–2016; class_proxy for 2017.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['actual', 'class_proxy']
+      - name: minutes_coverage
+        description: Share of played (closed-game) rows with non-null minutes.

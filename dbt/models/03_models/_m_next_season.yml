@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: m_next_season_eval
+    description: >
+      Held-out check of the next-season rating model. Pre-hooks train two BQML linear regressions of next
+      season's pre-tournament adj_net on this season's full-season adj_net, last season's adj_net, returning
+      minutes and points shares (observed returners) and conference strength: m_next_season_holdout on the
+      2014-15→2015-16 and 2015-16→2016-17 transitions, and m_next_season on all three transitions. The table
+      scores the holdout model on the latest observable transition, 2016-17→2017-18, next to a carry-forward
+      baseline (next rating = this rating).
+    data_tests:
+      - row_count_between: {arguments: {min_count: 1, max_count: 1}}
+    columns:
+      - name: evaluation
+        description: Which transition was held out (holdout_2016_to_2017).
+      - name: teams_scored
+        description: Teams with a rating in both seasons of the held-out transition.
+      - name: rmse
+        description: Root mean squared error of the projected next-season adj_net, points per 100 possessions.
+        data_tests: [not_null]
+      - name: mae
+        description: Mean absolute error of the projected next-season adj_net.
+      - name: r2
+        description: Share of the variance in next-season adj_net the model explains on the held-out transition.
+      - name: carry_forward_rmse
+        description: Error of simply carrying this season's full-season adj_net forward, for comparison.
+
+  - name: f_team_projection
+    description: >
+      Projected 2018-19 strength for all 351 teams, from m_next_season applied to the 2017-18 season. Returning
+      shares for 2017-18 are class-based (freshmen, sophomores and juniors), which overstate returns because they
+      miss early departures and transfers; they are shifted down by the average gap between the 2017-18 class
+      estimate and the observed 2014-2016 returning shares before projecting. The band is ± 1.2816 × the holdout
+      RMSE (about an 80% interval).
+    data_tests:
+      - row_count_between: {arguments: {min_count: 351, max_count: 351}}
+      - expression_is_true: {arguments: {expression: "projected_low <= projected_adj_net AND projected_adj_net <= projected_high"}}
+    columns:
+      - name: season
+        description: Projected season start year (2018 means 2018-19).
+      - name: season_label
+        description: Projected season as text, 2018-19.
+      - name: based_on_season
+        description: Season the inputs come from (2017 means 2017-18).
+      - name: team_id
+        description: Team identifier.
+        data_tests: [unique, not_null]
+      - name: market
+        description: School name.
+      - name: alias
+        description: Short team code.
+      - name: conf_alias
+        description: 2017-18 conference (most common per-game value; best available, not audited membership).
+      - name: current_adj_net
+        description: 2017-18 full-season adj_net.
+      - name: prior_adj_net
+        description: 2016-17 full-season adj_net.
+      - name: ret_min_share_class_proxy
+        description: Raw 2017-18 class-based share of minutes expected back.
+      - name: ret_min_share
+        description: Class-based minutes share after the downward shift used as the model input.
+      - name: ret_pts_share
+        description: Class-based points share after the downward shift used as the model input.
+      - name: conference_strength
+        description: 2017-18 full-season conference strength.
+      - name: projected_adj_net
+        description: Projected 2018-19 pre-tournament adj_net.
+        data_tests: [not_null]
+      - name: projected_low
+        description: Low end of the ~80% band.
+      - name: projected_high
+        description: High end of the ~80% band.
+      - name: projected_rank
+        description: Rank of projected_adj_net among the 351 teams (1 = strongest).
+        data_tests: [not_null]

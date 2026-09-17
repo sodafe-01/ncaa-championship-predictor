@@ -1,0 +1,36 @@
+-- Grain: one row per player per game (888,844); every source row kept. Owner: DE1 (story DE-03).
+-- Game labels come from stg_games. class is populated only for 2017-18; blank strings become NULL.
+SELECT
+  pg.game_id,
+  g.season,
+  g.season_label,
+  g.scheduled_date,
+  g.postseason_kind,
+  g.is_closed,
+  pg.team_id,
+  pg.player_id,
+  pg.full_name,
+  NULLIF(pg.class, '') AS class,
+  {{ class_rank("NULLIF(pg.class, '')") }} AS class_rank,
+  pg.height AS height_in,
+  pg.weight AS weight_lb,
+  pg.position,
+  pg.primary_position,
+  pg.starter AS is_starter,
+  pg.played,
+  pg.minutes_int64 AS minutes,
+  pg.points,
+  pg.rebounds AS reb,
+  pg.assists AS ast,
+  pg.turnovers AS tov,
+  pg.steals AS stl,
+  pg.blocks AS blk,
+  pg.personal_fouls AS pf,
+  pg.field_goals_made AS fgm,
+  pg.field_goals_att AS fga,
+  pg.three_points_made AS tpm,
+  pg.three_points_att AS tpa,
+  pg.free_throws_made AS ftm,
+  pg.free_throws_att AS fta
+FROM {{ source('ncaa_basketball', 'mbb_players_games_sr') }} AS pg
+JOIN {{ ref('stg_games') }} AS g ON g.game_id = pg.game_id

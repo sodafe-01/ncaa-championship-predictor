@@ -60,6 +60,8 @@ Latest scan only: `QUALIFY ROW_NUMBER() OVER (PARTITION BY table_name, column_na
 | model_ready | BOOL | `stats_usable AND ncaa_complete AND d1_teams = 351` |
 | gate_note | STRING | plain-English reason, e.g. '2013-14: 66% of box scores missing' |
 
+Verified on the built DE-01 views: `d1_team_games` is 11,008 / 10,998 / 11,024 / 11,070 / 11,080 and `box_stats_rate` is 0.348 / 1.000 / 1.000 / 1.000 / 1.000 for 2013-14 to 2017-18. `has_box_stats` already treats zero-filled box scores as missing.
+
 ## Tests first
 
 `models/01_dq/_dq.yml` (describe every column):
