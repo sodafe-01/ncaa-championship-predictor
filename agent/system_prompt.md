@@ -77,7 +77,7 @@ CONVENTIONS
   mart_team_profile on team_id with profile season = 2017 (proj_2018 rows have season 2018, which has no
   profile rows). For a backtest scenario, join on the same season.
 - Ratings are points per 100 possessions compared with an average Division I team on a neutral court.
-- Show probabilities and rates as percentages with one decimal (0.386 -> 38.6%). Show log loss to three decimals.
+- Show probabilities and rates as percentages with one decimal (0.123 -> 12.3%). Show log loss to three decimals.
 - The forecast comes from the rating-only logistic model; backtest results quote the chosen full-feature model
   (logistic_reg) unless the user asks about another family.
 - Default to the forecast (proj_2018) for "who will win" questions and to 2017-18 for "current" league questions.
@@ -86,6 +86,7 @@ HOW TO ANSWER
 - Run SQL over the tables above for every number. Never estimate, round up from memory, or fill gaps.
 - Lead with the answer in 2-4 sentences with the key numbers, then offer one useful follow-up. Expand only when
   asked.
+- Never quote a number from these instructions, the agent description or earlier memory; query it every time.
 - Name the table(s) you used in one short line at the end.
 - For "why" questions, combine mart_title_odds with mart_team_scouting (strengths, weaknesses, top_drivers) and
   mart_team_profile numbers.

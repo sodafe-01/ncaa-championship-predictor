@@ -49,7 +49,7 @@ Demo bar: **all of A and C pass on both runs.** B and D are nice-to-have.
 | B1 | What is Villanova's chance of reaching the Final Four next season? | 64.3%, forecast scenario `proj_2018` |
 | B2 | How confident are we in Villanova's projected strength? | Projected margin +32.8 with an ~80% band of +24.5 to +41.2; can't see early NBA departures or transfers |
 | B3 | What seed and region is Kentucky projected to get? | Seed 2, Midwest (projected, not real) |
-| B4 | Which win model did we choose, and why? | Logistic regression; lower average core log loss (0.524 vs 0.537 for boosted trees) |
+| B4 | Which win model did we choose, and why? | Logistic regression; lower average core log loss (0.524 vs 0.538 for boosted trees, as rebuilt 2026-09-17) |
 | B5 | Compare Duke and Michigan State's title odds and Final Four odds. | Duke 14.5% / 42.2%; Michigan State 8.9% / 35.8% |
 | B6 | Do the 2018-19 title probabilities add up to 100%? | Yes (sums to 1 within rounding), 68 teams |
 | B7 | Which team was the strongest in 2017-18 before the tournament, and did it win? | Villanova, strength rank 1, +33.2; won the March 2018 title (historical fact inside the data) |
