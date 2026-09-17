@@ -1,0 +1,209 @@
+version: 2
+
+models:
+  - name: mart_team_profile
+    description: >
+      One row per team per season (351 Division I teams, 2014-15 to 2017-18): the team's profile for the
+      dashboard and the Data Agent. Strength ratings and style numbers are as of the day before the NCAA
+      tournament started (what was known before the bracket was played); the overall record covers the
+      whole season. Ratings are points per 100 possessions against an average opponent on a neutral court.
+      Conference is the conference the team played most of its games in that season according to the
+      source data; it is the best available record, not audited historical membership, so conference
+      realignment may not be reflected perfectly.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, team_id]}}
+      - row_count_between: {arguments: {min_count: 351, max_count: 351, group_by: [season]}}
+      - row_count_between:
+          arguments: {min_count: 1, max_count: 1, group_by: [season]}
+          config: {where: "is_champion"}
+      - expression_is_true: {arguments: {expression: "ncaa_seed IS NULL", where: "season = 2017"}}
+    columns:
+      - name: season
+        description: Season start year (2017 means the 2017-18 season).
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: team_id
+        description: Team identifier used across every table.
+      - name: team_name
+        description: Full team name, school and nickname, e.g. Villanova Wildcats.
+        data_tests: [not_null]
+      - name: school
+        description: School name, e.g. Villanova.
+      - name: alias
+        description: Short team code, e.g. VILL.
+      - name: conference
+        description: >
+          Conference short name for that season: the conference the team played most of its games in
+          according to the source data. Best available record, not audited historical membership.
+      - name: color_hex
+        description: Team's primary color as a hex code, for charts.
+      - name: logo_url
+        description: Link to the team's medium-size logo image.
+      - name: wins
+        description: Wins over the whole season, postseason included.
+      - name: losses
+        description: Losses over the whole season, postseason included.
+      - name: win_pct
+        description: Share of games won over the whole season (0 to 1).
+      - name: pre_tourney_wins
+        description: Wins before the NCAA tournament started (conference tournaments included).
+      - name: pre_tourney_losses
+        description: Losses before the NCAA tournament started (conference tournaments included).
+      - name: adj_offense
+        description: Adjusted offense before the tournament, points scored per 100 possessions against an average defense on a neutral court. Higher is better.
+      - name: adj_defense
+        description: Adjusted defense before the tournament, points allowed per 100 possessions against an average offense on a neutral court. Lower is better.
+      - name: adj_margin
+        description: Adjusted margin before the tournament, adjusted offense minus adjusted defense; the main team-strength rating. Higher is better.
+        data_tests: [not_null]
+      - name: strength_rank
+        description: Rank of adjusted margin among all Division I teams that season before the tournament (1 = strongest).
+        data_tests: [not_null]
+      - name: tempo
+        description: Possessions per 40 minutes before the tournament; higher means a faster pace.
+      - name: efg_pct
+        description: Effective field-goal percentage before the tournament, counting a made three as 1.5 made shots.
+      - name: turnover_pct
+        description: Turnovers per possession before the tournament. Lower is better.
+      - name: off_rebound_pct
+        description: Share of the team's missed shots it rebounded before the tournament.
+      - name: ft_rate
+        description: Free-throw attempts per field-goal attempt before the tournament.
+      - name: opp_efg_pct
+        description: Opponents' effective field-goal percentage before the tournament. Lower is better.
+      - name: three_point_rate
+        description: Share of field-goal attempts that were threes before the tournament.
+      - name: three_point_pct
+        description: Three-point shooting percentage before the tournament.
+      - name: schedule_strength
+        description: Average adjusted margin of the opponents the team played before the tournament. Higher means a tougher schedule.
+      - name: conference_strength
+        description: >
+          Average adjusted margin of all teams in the team's conference that season before the tournament.
+          Conference membership is the best available record, not audited historical membership.
+      - name: last10_margin
+        description: Points per 100 possessions better than the opponent over the team's last 10 Division I games before the tournament (not adjusted for opponents).
+      - name: ap_rank_before_tourney
+        description: AP poll rank at the team's last game before the tournament; empty when unranked.
+      - name: returning_minutes_share
+        description: >
+          Share of the team's minutes expected back next season. Through 2016-17 it is the share actually
+          played by players who returned; for 2017-18 it is estimated from class (freshmen, sophomores and
+          juniors), which overstates returns because it cannot see early departures or transfers.
+      - name: returning_basis
+        description: How the returning share was measured, actual (players who really returned) or class_proxy (estimated from class, 2017-18).
+      - name: experience_index
+        description: Minutes-weighted average class before the tournament (freshman 1 to graduate 5). Only available for 2017-18.
+      - name: program_win_pct_5y
+        description: The program's share of games won over the previous five seasons.
+      - name: pctl_offense
+        description: Percentile of adjusted offense among Division I teams that season (0 to 1, 1 = best).
+      - name: pctl_defense
+        description: Percentile of adjusted defense among Division I teams that season (0 to 1, 1 = best defense).
+      - name: pctl_margin
+        description: Percentile of adjusted margin among Division I teams that season (0 to 1, 1 = strongest).
+      - name: pctl_tempo
+        description: Percentile of tempo among Division I teams that season (0 to 1, 1 = fastest).
+      - name: pctl_shooting
+        description: Percentile of effective field-goal percentage among Division I teams that season (0 to 1, 1 = best shooting).
+      - name: pctl_ball_security
+        description: Percentile of turnover rate among Division I teams that season (0 to 1, 1 = fewest turnovers).
+      - name: pctl_off_rebounding
+        description: Percentile of offensive rebounding among Division I teams that season (0 to 1, 1 = best).
+      - name: pctl_three_point_rate
+        description: Percentile of three-point attempt rate among Division I teams that season (0 to 1, 1 = most three-point heavy).
+      - name: made_ncaa
+        description: TRUE when the team played in that season's NCAA tournament (First Four included).
+      - name: ncaa_seed
+        description: NCAA tournament seed (1 to 16) for 2014-15 to 2016-17; empty for 2017-18 (seeds not in the data) and for teams that did not make the tournament.
+      - name: ncaa_wins
+        description: NCAA tournament wins that season, not counting First Four games.
+      - name: ncaa_last_round
+        description: Furthest NCAA tournament round the team played in (FF, R64, R32, S16, E8, F4, FINAL); empty when it did not make the tournament.
+      - name: is_champion
+        description: TRUE when the team won that season's national championship game.
+
+  - name: mart_conference_season
+    description: >
+      One row per conference per season (2014-15 to 2017-18) summarizing how strong each conference was
+      before the NCAA tournament and how its teams did in it. Conference membership is the conference each
+      team played most of its games in according to the source data: the best available record, not
+      audited historical membership, so realignment may not be reflected perfectly.
+    data_tests:
+      - unique_combination_of_columns: {arguments: {combination_of_columns: [season, conference]}}
+    columns:
+      - name: season
+        description: Season start year (2017 means the 2017-18 season).
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: conference
+        description: >
+          Conference short name. Best available record from the source data, not audited historical
+          membership.
+      - name: teams
+        description: Number of Division I teams counted in the conference that season.
+      - name: avg_adj_margin
+        description: Average adjusted margin of the conference's teams before the tournament; the conference strength rating.
+      - name: conference_rank
+        description: Rank of the conference by average adjusted margin that season (1 = strongest).
+      - name: best_team_name
+        description: The conference's strongest team by adjusted margin before the tournament.
+      - name: best_team_adj_margin
+        description: Adjusted margin of the conference's strongest team.
+      - name: top25_teams
+        description: Number of the conference's teams ranked in the top 25 by adjusted margin before the tournament.
+      - name: ncaa_bids
+        description: Number of the conference's teams that played in the NCAA tournament (First Four included).
+      - name: ncaa_wins
+        description: Total NCAA tournament wins by the conference's teams, not counting First Four games.
+      - name: final_four_teams
+        description: Number of the conference's teams that reached the Final Four.
+      - name: champion_from_conference
+        description: TRUE when the national champion came from this conference.
+
+  - name: mart_league_season
+    description: >
+      One row per season (2014-15 to 2017-18) with league-wide trends: style averages before the NCAA
+      tournament, home-court advantage, parity, and how unpredictable the tournament was. Style averages
+      are the average of the 351 Division I teams' pre-tournament numbers.
+    data_tests:
+      - row_count_between: {arguments: {min_count: 4, max_count: 4}}
+    columns:
+      - name: season
+        description: Season start year (2017 means the 2017-18 season).
+        data_tests: [unique, not_null]
+      - name: season_label
+        description: Season as text, e.g. 2017-18.
+      - name: teams
+        description: Number of Division I teams (351).
+      - name: avg_tempo
+        description: Average team tempo before the tournament, possessions per 40 minutes.
+      - name: avg_efg_pct
+        description: Average team effective field-goal percentage before the tournament.
+      - name: avg_three_point_rate
+        description: Average share of field-goal attempts that were threes before the tournament.
+      - name: avg_three_point_pct
+        description: Average team three-point shooting percentage before the tournament.
+      - name: avg_ft_rate
+        description: Average free-throw attempts per field-goal attempt before the tournament.
+      - name: avg_turnover_pct
+        description: Average turnovers per possession before the tournament.
+      - name: home_win_pct
+        description: >
+          Share of regular-season games between two Division I teams won by the home team, excluding
+          games at neutral sites. Neutral sites are flagged on a best-effort basis, so a few neutral-site
+          events count as home games.
+      - name: home_margin
+        description: Average home-team scoring margin in those same regular-season games.
+      - name: parity_sd_adj_margin
+        description: Standard deviation of teams' adjusted margins before the tournament; lower means more parity.
+      - name: top10_gap
+        description: Average adjusted margin of the top 10 teams minus the median team's adjusted margin; how far the elite sit above an average team.
+      - name: ncaa_upset_rate
+        description: Share of NCAA tournament games from the round of 64 on won by the worse (higher-numbered) seed; empty for 2017-18 (no seeds in the data).
+      - name: ncaa_avg_margin
+        description: Average winning margin in NCAA tournament games, First Four included.
+      - name: champion_name
+        description: Full name of that season's national champion.
+      - name: champion_pre_tourney_rank
+        description: The champion's adjusted-margin rank among Division I teams before the tournament (1 = strongest).
