@@ -4,16 +4,17 @@ Test script for the BigQuery Data Agent before the demo. Expected answers match 
 `da-hackathon-2026.texas_longhorns` as built on 2026-09-16 (see `agent/examples.md`). If the marts are rebuilt,
 re-verify the expected values first.
 
-> **Before testing:** paste the current `agent/system_prompt.md` (mart-based) into the agent and load the eight
-> examples from `agent/examples.md`. An agent still using the old prompt (`v_champion_probabilities`,
+> **Before testing:** the deployed agent `texas-longhorns-front-office-analyst` already has the current
+> `agent/system_prompt.md` and all ten examples. For any other agent, paste the prompt and load the eight examples
+> from `agent/examples.md` plus the two at the end of `agent/system_prompt.md`. An agent still using the old prompt (`v_champion_probabilities`,
 > `v_team_scouting`) will fail tests A1–A8.
 
 ## How to run
 
 1. Start a **new conversation** for each section (A, B, C). Run section D as one conversation.
 2. Ask each prompt **exactly as written**, twice. Record both answers.
-3. Open the generated SQL for every answer and confirm it reads only `texas_longhorns.mart_*` (or the tables the
-   test names).
+3. Open the generated SQL for every answer and confirm it reads only `texas_longhorns.mart_*`, `p_matchup` or
+   `m_game_win_calibration` (or the tables the test names).
 4. Score each run, then copy failures into the team channel with the prompt, answer and SQL.
 
 | Score | Meaning |
