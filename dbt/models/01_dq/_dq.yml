@@ -42,6 +42,12 @@ models:
         description: 75th percentile for numeric columns; NULL for other types.
       - name: top_values
         description: Most frequent values with their count and percentage of scanned rows (scan top_n).
+      - name: top_values.value
+        description: Frequent value represented as text in the Knowledge Catalog profile output.
+      - name: top_values.count
+        description: Number of scanned rows containing this frequent value.
+      - name: top_values.percent
+        description: Percentage of scanned rows containing this frequent value, on a 0-100 scale.
       - name: rows_scanned
         description: Rows the profile job read (scan job_rows_scanned).
       - name: table_row_count
