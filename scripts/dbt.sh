@@ -24,7 +24,15 @@ fi
 
 TARGET="${DBT_TARGET:-token}"
 if [[ "${TARGET}" == "token" && -z "${GCP_ACCESS_TOKEN:-}" ]]; then
-  GCP_ACCESS_TOKEN="$(gcloud auth print-access-token)"
+  # dbt cannot refresh this token, so it must outlive the whole run. `gcloud auth print-access-token`
+  # returns a cached token that can be minutes from expiry (a full build failed mid-run that way);
+  # `gcloud auth application-default print-access-token` mints a fresh ~60-minute token on every call.
+  # Fall back to the cached gcloud token when Application Default Credentials aren't set up.
+  if ! GCP_ACCESS_TOKEN="$(gcloud auth application-default print-access-token 2>/dev/null)" \
+    || [[ -z "${GCP_ACCESS_TOKEN}" ]]; then
+    echo "dbt.sh: no Application Default Credentials; using the cached gcloud token (may expire mid-run)." >&2
+    GCP_ACCESS_TOKEN="$(gcloud auth print-access-token)"
+  fi
   export GCP_ACCESS_TOKEN
 fi
 
