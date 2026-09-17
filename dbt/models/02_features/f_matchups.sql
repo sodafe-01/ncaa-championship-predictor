@@ -2,6 +2,8 @@
   config(materialized="table")
 }}
 
+-- Grain: game_id x team_a_id; every f_team_game_efficiency row. Owner: DE2 (story DE-09).
+-- Features always come from the pre_ncaa report card of the same season (no in-tournament information).
 SELECT
   e.game_id,
   e.season,

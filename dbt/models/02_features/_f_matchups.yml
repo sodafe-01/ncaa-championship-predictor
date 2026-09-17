@@ -3,9 +3,12 @@ version: 2
 models:
   - name: f_matchups
     description: >
-      One row per team per game from f_team_game_efficiency. Features are
-      team A minus team B from the same season's pre_ncaa report card, so
-      tournament games do not leak in-tournament information.
+      One row per team per game from f_team_game_efficiency (each game appears twice, once per team as
+      team A). Features are team A minus team B from the same season's pre_ncaa report card, so
+      tournament rows use only pre-tournament information. Regular-season rows' report cards include
+      that game (acceptable for training, but it inflates confidence), so calibrate on tournament rows.
+      Walk-forward for backtest season s: train on season < s or (season = s and is_training_row); score
+      season = s and is_tournament_row. venue_a inherits the best-effort neutral-site flag.
     data_tests:
       - unique_combination_of_columns:
           arguments:
@@ -16,11 +19,8 @@ models:
             max_count: 2
             group_by: [game_id]
       - row_count_between:
-          arguments:
-            min_count: 134
-            max_count: 134
-            group_by: [season]
-            where: "is_tournament_row"
+          arguments: {min_count: 134, max_count: 134, group_by: [season]}
+          config: {where: "is_tournament_row AND season BETWEEN 2014 AND 2016"}
       - expression_is_true:
           arguments:
             expression: "home_indicator = 0"
