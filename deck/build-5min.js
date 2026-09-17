@@ -15,7 +15,7 @@ const fa = require('react-icons/fa6');
 //   backtest         mart_backtest       is_chosen_model AND is_core_season (logistic_reg; AVG over 3 seasons)
 //   drivers          m_explain_topk      proj_2018, explain_level = 'team_profile', the pick's team_id
 //   champions        mart_title_odds     is_actual_champion, strength_rank (pre-tournament adjusted-margin rank)
-//   agentQA          mart_agent_qa       question 3 (agent/examples.md), verified 2026-09-16
+//   agentH2H         p_matchup           proj_2018 (rating_only), asked through agent texas-longhorns-front-office-analyst 2026-09-17
 //   league           mart_conference_season (season = 2017), mart_league_season (avg_tempo, avg_three_point_rate, ncaa_upset_rate)
 //   quality          README_COMPLETED.md: dbt test run 2026-09-16; m_next_season held-out check 2016-17 -> 2017-18
 const DATA = {
@@ -36,9 +36,10 @@ const DATA = {
     upsetRates: [19.0, 31.7, 22.2], // worse seed wins, round of 64 on, 2015-2017
   },
   quality: { tests: 322, projRmse: 6.49, carryRmse: 7.63 },
-  agentQA: {
-    q: 'Did you see past champions coming?',
-    a: 'Before each tournament, Duke ranked 4th (10.3%), Villanova 6th (5.2%) and North Carolina 3rd (11.7%) in our title odds.',
+  // head-to-head odds from the BigQuery ML win model, as answered by the live Data Agent
+  agentH2H: {
+    q: 'Villanova vs Duke on a neutral court?',
+    a: 'Villanova wins 66.0% of single games against Duke, and Duke wins 34.0%. That is one game, not title odds.',
   },
 };
 
@@ -268,7 +269,7 @@ async function main() {
       { title: 'SOURCES', boxes: [['ncaa_basketball', 'raw tables, read-only'], ['Knowledge Catalog', 'scans + 151-term glossary']] },
       { title: 'dbt ON BIGQUERY', boxes: [['stg_ · dq_', 'clean + quality gate'], ['f_ report cards', 'every team, every season'], ['mart_ tables', 'what the agent reads']] },
       { title: 'INTELLIGENCE', boxes: [['BQML win model', 'P(A beats B), any matchup'], ['2018-19 projection', 'field of 68 + bracket'], ['10,000× simulation', 'pure SQL, seeded'], ['AI.GENERATE', 'anonymized scouting']], hot: 2 },
-      { title: 'DELIVERY', boxes: [['BigQuery Data Agent', 'Agents Hub · in progress', 'building'], ['Looker Studio', 'report · in progress', 'building'], ['Gemini Enterprise', 'target state', 'target']] },
+      { title: 'DELIVERY', boxes: [['BigQuery Data Agent', 'Agents Hub · live', 'live'], ['Looker Studio', 'report · in progress', 'building'], ['Gemini Enterprise', 'target state', 'target']] },
     ];
     const laneW = 2.0, gap = 0.27, top = 1.4, laneH = 2.55;
     lanes.forEach((lane, li) => {
@@ -284,12 +285,13 @@ async function main() {
         const y = areaTop + bi * (bh + bGap);
         const isTarget = status === 'target';
         const isBuilding = status === 'building';
+        const isLive = status === 'live';
         const isHot = lane.hot === bi;
-        const fill = isTarget ? C.tint : isHot ? C.orange : C.white;
-        const border = isTarget ? { line: C.slate, dash: 'dash' } : isBuilding ? { line: C.orange, dash: 'dash', lineWidth: 1.25 } : { line: isHot ? undefined : C.line };
+        const fill = isTarget ? C.tint : isHot ? C.orange : isLive ? C.ink : C.white;
+        const border = isTarget ? { line: C.slate, dash: 'dash' } : isBuilding ? { line: C.orange, dash: 'dash', lineWidth: 1.25 } : { line: isHot || isLive ? undefined : C.line };
         card(s, x + 0.12, y, laneW - 0.24, bh, fill, border);
-        const fg = isTarget ? C.muted : isHot ? C.white : C.ink;
-        const fg2 = isTarget ? C.muted : isHot ? 'FBE3CF' : isBuilding ? C.orange : C.muted;
+        const fg = isTarget ? C.muted : isHot || isLive ? C.white : C.ink;
+        const fg2 = isTarget ? C.muted : isHot ? 'FBE3CF' : isLive ? C.orangeHi : isBuilding ? C.orange : C.muted;
         s.addText([
           { text: h, options: { fontSize: 11, bold: true, color: fg, breakLine: true } },
           { text: d, options: { fontSize: 9, color: fg2 } },
@@ -314,7 +316,7 @@ async function main() {
     s.addNotes(
       'ARCHITECTURE (1 min 15s). Read left to right. Raw NCAA tables and Knowledge Catalog scans come in; one dbt project cleans them, tests them, and builds a report card for every team and season. ' +
       'The intelligence layer is all in BigQuery: a BQML model predicts any single matchup, we project every team into next season and build a likely field of 68, a pure-SQL simulation plays that bracket ten thousand times, and AI.GENERATE writes scouting reports. ' +
-      'On top, the Data Agent and the Looker report are being built now on these marts, and Gemini Enterprise is the target front door. ' +
+      'On top, the Data Agent is live on these marts and on the BigQuery ML model\'s head-to-head odds; the Looker report is being built, and Gemini Enterprise is the target front door. ' +
       'Three choices, and why: compute stays next to the data, so governance holds. Every answer traces to SQL, and Gemini sees numbers, never names, so it cannot lean on what it knows about 2019. ' +
       `And everything rebuilds from code: one command for the pipeline, one for the Gemini outputs, and ${DATA.quality.tests} dbt tests pass.`
     );
@@ -372,15 +374,15 @@ async function main() {
 
     // Agent Q&A mock
     card(s, 5.45, 3.6, 3.95, 1.55, C.ink);
-    s.addText('FRONT OFFICE ANALYST · REHEARSED Q&A', {
+    s.addText('ASK THE FRONT OFFICE ANALYST · LIVE', {
       x: 5.65, y: 3.72, w: 3.65, h: 0.22, fontFace: FONT, fontSize: 8.5, bold: true, color: C.orangeHi, charSpacing: 1.5, margin: 0,
     });
-    s.addShape(S.ROUNDED_RECTANGLE, { x: 6.8, y: 3.98, w: 2.45, h: 0.3, rectRadius: 0.15, fill: { color: C.ink3 }, line: { type: 'none' } });
-    s.addText(DATA.agentQA.q, { x: 6.8, y: 3.98, w: 2.45, h: 0.3, fontFace: FONT, fontSize: 10, color: C.white, align: 'center', valign: 'middle', margin: 0 });
-    s.addText(DATA.agentQA.a, {
+    s.addShape(S.ROUNDED_RECTANGLE, { x: 6.5, y: 3.98, w: 2.75, h: 0.3, rectRadius: 0.15, fill: { color: C.ink3 }, line: { type: 'none' } });
+    s.addText(DATA.agentH2H.q, { x: 6.5, y: 3.98, w: 2.75, h: 0.3, fontFace: FONT, fontSize: 10, color: C.white, align: 'center', valign: 'middle', margin: 0 });
+    s.addText(DATA.agentH2H.a, {
       x: 5.65, y: 4.34, w: 3.6, h: 0.5, fontFace: FONT, fontSize: 10.5, color: C.white, margin: 0, valign: 'top',
     });
-    s.addText('↳ SQL-verified answer, stored in mart_agent_qa', {
+    s.addText('↳ BigQuery ML head-to-head odds (p_matchup), via SQL', {
       x: 5.65, y: 4.84, w: 3.6, h: 0.24, fontFace: FONT, fontSize: 9, italic: true, color: C.mutedDark, margin: 0,
     });
 
@@ -388,12 +390,12 @@ async function main() {
     footer(s);
     s.addNotes(
       'WHY TRUST IT (1 min). A forecast is only worth something if it beats the simple answers. ' +
-      `We replayed the 2015, 2016 and 2017 tournaments, ${b.games} games, using only games played before each one. Log loss punishes confident wrong calls. ` +
-      `Our model's error was ${b.model}, against ${b.seed} for "the better seed always wins" and ${b.record} for "the better record always wins". It beat both baselines in all three years, and called ${Math.round(100 * b.accuracy)} percent of games. ` +
+      `We replayed the 2015, 2016 and 2017 tournaments, ${b.games} games, using only games played before each one. ` +
+      `Our model's error was ${b.model}, against ${b.seed} for "the better seed always wins" and ${b.record} for "the better record always wins". It beat both baselines in all three years. ` +
       `The forecast uses the ratings-only version, which scored ${b.forecastModel}. ` +
       `In ${DATA.pick.team}'s 2017-18 profile, the model weighs adjusted offense, adjusted scoring margin, and strength of schedule most. ` +
       `The next-season projection also beat simply carrying ratings forward, RMSE ${DATA.quality.projRmse} against ${DATA.quality.carryRmse}. ` +
-      'And the rehearsed agent answer, verified in SQL, shows the real champions ranked fourth, sixth and third in our pre-tournament odds.'
+      `And the live agent answers head-to-head questions straight from the BigQuery ML model: ${DATA.pick.team} beats Duke 66 percent of the time in a single game on a neutral court.`
     );
   }
 
@@ -603,7 +605,7 @@ async function main() {
     header(s, 'A5  ·  THE AI LAYER', 'Front Office Analyst: target runtime');
     const h = 3.7, w = h * (2829 / 1542);
     s.addImage({ path: path.join(DIAGRAMS, '3-runtime-sequence.png'), x: 0.5, y: 1.45, w, h });
-    const pts = ['AI.GENERATE with gemini-2.5-flash, temperature 0, output_schema', 'Prompts carry numbers only: no team name, conference or seed', 'Agent in progress; 8 SQL-verified Q&A ready in mart_agent_qa'];
+    const pts = ['AI.GENERATE with gemini-2.5-flash, temperature 0, output_schema', 'Prompts carry numbers only: no team name, conference or seed', 'Agent live: 9 tables incl. BQML head-to-head odds; 10 verified examples'];
     s.addText(bulletList(pts, 10.5), { x: 7.45, y: 1.6, w: 2.05, h: 3.4, fontFace: FONT, margin: 0, valign: 'top' });
     footer(s);
   }
@@ -678,7 +680,7 @@ async function main() {
     const hc = (t) => ({ text: t, options: { bold: true, color: C.white, fill: { color: C.ink } } });
     const rows = [
       [hc('Criterion'), hc('How we satisfy it'), hc('Evidence'), hc('Owner')],
-      ['Technical Execution', 'BQML with backtests, in-warehouse AI.GENERATE, SQL-verified agent Q&A', 'Backtest scorecard, agent Q&A', 'Data + ML Eng'],
+      ['Technical Execution', 'BQML with backtests, in-warehouse AI.GENERATE, live agent on BQML outputs', 'Backtest scorecard, head-to-head Q&A', 'Data + ML Eng'],
       ['Discovery & Growth', 'Catalog scan to data map; dbt + CI; documented learnings', 'Learnings log, CI history', 'Captain + DE'],
       ['Value & Impact', 'Beats seed and record baselines; reusable client pattern', 'Log-loss delta, use cases', 'ML Eng + Captain'],
       ['Storytelling', 'Prediction-first narrative, grounded scouting cards', 'This briefing', 'Captain + Analytics'],
