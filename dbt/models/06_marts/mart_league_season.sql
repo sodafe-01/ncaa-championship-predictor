@@ -21,7 +21,7 @@ WITH profiles AS (
 teams AS (
   SELECT
     season,
-    ANY_VALUE(season_label) AS season_label,
+    MIN(season_label) AS season_label,
     COUNT(*) AS teams,
     AVG(tempo) AS avg_tempo,
     AVG(efg_pct) AS avg_efg_pct,
@@ -31,7 +31,7 @@ teams AS (
     AVG(turnover_pct) AS avg_turnover_pct,
     STDDEV(adj_margin) AS parity_sd_adj_margin,
     AVG(IF(strength_rank <= 10, adj_margin, NULL)) AS top10_avg_adj_margin,
-    ANY_VALUE(median_adj_margin) AS median_adj_margin,
+    MIN(median_adj_margin) AS median_adj_margin,
     MAX(IF(is_champion, team_name, NULL)) AS champion_name,
     MAX(IF(is_champion, strength_rank, NULL)) AS champion_pre_tourney_rank
   FROM profiles
